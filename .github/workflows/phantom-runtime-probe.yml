@@ -1,0 +1,42 @@
+name: PHANToM Runtime Probe
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/phantom-runtime-probe.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Install NDK
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;21.4.7075529"
+      - name: Fetch runtime
+        run: |
+          curl -L https://github.com/ISEKHON/VirtualApp/archive/refs/heads/main.zip -o runtime.zip
+          unzip -q runtime.zip
+          mv VirtualApp-main runtime
+      - name: Rebrand probe
+        working-directory: runtime
+        run: |
+          sed -i 's/applicationId "io.va.exposed64"/applicationId "com.phantom.vphone.runtime"/' app/build.gradle
+          sed -i 's/versionCode 1/versionCode 40/' app/build.gradle
+          sed -i 's/versionName "1.0.0"/versionName "0.4.0-alpha-probe"/' app/build.gradle
+          sed -i 's#<string name="app_name">VirtualApp</string>#<string name="app_name">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
+          sed -i 's#<string name="vxp">VirtualApp</string>#<string name="vxp">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
+      - name: Build
+        working-directory: runtime
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PHANToM-runtime-probe
+          path: runtime/app/build/outputs/apk/debug/*-arm64-v8a.apk
+          retention-days: 7
