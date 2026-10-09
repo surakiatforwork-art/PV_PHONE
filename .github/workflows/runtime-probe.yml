@@ -16,10 +16,10 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
       - name: Install NDK 21.4
-        run: yes | sdkmanager "ndk;21.4.7075529"
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;21.4.7075529"
       - name: Fetch VirtualApp source
         run: |
           curl -L https://github.com/ISEKHON/VirtualApp/archive/refs/heads/main.zip -o runtime.zip
