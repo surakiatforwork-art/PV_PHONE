@@ -1,4 +1,4 @@
-﻿package com.phantom.vphone;
+package com.phantom.vphone;
 import android.content.*;
 import android.content.pm.*;
 import android.database.Cursor;
