@@ -1,6 +1,6 @@
 --- a/app/src/main/java/io/virtualapp/home/NewHomeActivity.java
 +++ b/app/src/main/java/io/virtualapp/home/NewHomeActivity.java
-@@ -36,11 +36,15 @@
+@@ -36,11 +36,16 @@
  import io.virtualapp.home.repo.AppRepository;
  import io.virtualapp.settings.SettingsActivity;
  
@@ -11,12 +11,13 @@
  
      private static final String SHOW_DOZE_ALERT_KEY = "SHOW_DOZE_ALERT_KEY";
      private static final String TAG = NewHomeActivity.class.getSimpleName();
++    private static final int REQUEST_CAMERA_PERMISSION = 0x5049;
      private Handler mUiHandler;
 +    private Toolbar mToolbar;
  
      private RecyclerView mRecyclerView;
      private ProgressBar mProgressBar;
-@@ -63,8 +67,8 @@
+@@ -63,8 +68,8 @@
          mUiHandler = new Handler(getMainLooper());
  
          // Toolbar — dark gray with white text
@@ -27,7 +28,15 @@
  
          // Views
          mRecyclerView = findViewById(R.id.home_recycler_view);
-@@ -229,6 +233,7 @@
+@@ -126,6 +131,7 @@
+         });
+ 
+         mRepository = new AppRepository(this);
++        ensureCameraPermission();
+     }
+ 
+ 
+@@ -229,6 +235,7 @@
      protected void onResume() {
          super.onResume();
          loadApps();
@@ -35,7 +44,7 @@
          alertForDoze();
      }
  
-@@ -241,7 +246,13 @@
+@@ -241,7 +248,13 @@
      @Override
      public boolean onOptionsItemSelected(MenuItem item) {
          int id = item.getItemId();
@@ -50,7 +59,7 @@
              startActivity(new Intent(this, SettingsActivity.class));
              return true;
          } else if (id == R.id.main_reboot) {
-@@ -257,6 +268,72 @@
+@@ -257,6 +270,89 @@
              return true;
          }
          return super.onOptionsItemSelected(item);
@@ -58,6 +67,18 @@
 +
 +    private static final String CAMERA_PREFS = "phantom_settings";
 +    private static final String CAMERA_PACKAGE_KEY = "camera_package";
++
++    private boolean hasCameraPermission() {
++        return Build.VERSION.SDK_INT < Build.VERSION_CODES.M
++                || checkSelfPermission(android.Manifest.permission.CAMERA)
++                == android.content.pm.PackageManager.PERMISSION_GRANTED;
++    }
++
++    private void ensureCameraPermission() {
++        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !hasCameraPermission()) {
++            requestPermissions(new String[]{android.Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
++        }
++    }
 +
 +    private void chooseCameraProvider() {
 +        SharedPreferences prefs = getSharedPreferences(CAMERA_PREFS, MODE_PRIVATE);
@@ -83,6 +104,11 @@
 +    }
 +
 +    private void testSelectedCamera() {
++        if (!hasCameraPermission()) {
++            ensureCameraPermission();
++            Toast.makeText(this, "Allow Camera permission, then try again.", Toast.LENGTH_SHORT).show();
++            return;
++        }
 +        String pkg = getSharedPreferences(CAMERA_PREFS, MODE_PRIVATE)
 +                .getString(CAMERA_PACKAGE_KEY, "");
 +        Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
