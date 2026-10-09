@@ -1,0 +1,18 @@
+--- a/lib/src/main/java/com/lody/virtual/client/hook/proxies/am/MethodProxies.java
++++ b/lib/src/main/java/com/lody/virtual/client/hook/proxies/am/MethodProxies.java
+@@ -412,6 +412,7 @@
+ 
+         @Override
+         public Object call(Object who, Method method, Object... args) throws Throwable {
++            VLog.i("PHANToM.StartActivity", "intercept method=" + method + " args=" + java.util.Arrays.toString(args));
+             int intentIndex = ArrayUtils.indexOfObject(args, Intent.class, 1);
+             if (intentIndex < 0) {
+                 return ActivityManagerCompat.START_INTENT_NOT_RESOLVED;
+@@ -473,6 +474,7 @@
+             }
+ 
+             ActivityInfo activityInfo = VirtualCore.get().resolveActivityInfo(intent, userId);
++            VLog.i("PHANToM.StartActivity", "resolved=" + (activityInfo == null ? "null" : activityInfo.packageName + "/" + activityInfo.name) + " intent=" + intent);
+             if (activityInfo == null) {
+                 VLog.e("VActivityManager", "Unable to resolve activityInfo : %s", intent);
+                 if (intent.getPackage() != null && isAppPkg(intent.getPackage())) {
