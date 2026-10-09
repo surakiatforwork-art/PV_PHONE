@@ -1,0 +1,9 @@
+package com.phantom.vphone;
+import android.app.Activity; import android.content.Intent; import android.os.Bundle; import android.provider.MediaStore; import android.widget.Button; import android.widget.LinearLayout; import android.widget.TextView; import android.content.ActivityNotFoundException;
+public class MainActivity extends Activity {
+ private TextView status; private static final int CAMERA_REQUEST=10;
+ @Override public void onCreate(Bundle saved){super.onCreate(saved);LinearLayout root=new LinearLayout(this);root.setOrientation(1);root.setPadding(32,64,32,32);TextView title=new TextView(this);title.setText("PHANToM VPhone - Camera Test");title.setTextSize(23);root.addView(title);status=new TextView(this);status.setText("Prototype: camera intents only. Virtual runtime not installed.");root.addView(status);addButton(root,"Test GCam","com.meitu.meiyancamera");addButton(root,"Test stock camera","com.transsion.camera");addButton(root,"Test default camera",null);setContentView(root);}
+ private void addButton(LinearLayout root,String label,String pkg){Button b=new Button(this);b.setText(label);b.setOnClickListener(v->launch(pkg));root.addView(b);}
+ private void launch(String pkg){Intent i=new Intent(MediaStore.ACTION_IMAGE_CAPTURE);if(pkg!=null)i.setPackage(pkg);try{startActivityForResult(i,CAMERA_REQUEST);status.setText("Launched "+pkg);}catch(ActivityNotFoundException|SecurityException e){status.setText("Failed: "+e.getMessage());}}
+ @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==CAMERA_REQUEST)status.setText("Result="+result+"; data="+(data!=null));}
+}
