@@ -1,4 +1,4 @@
-package com.phantom.vphone;
+﻿package com.phantom.vphone;
 import android.app.*;
 import android.content.*;
 import android.graphics.drawable.Drawable;
@@ -16,11 +16,11 @@ final class AppPickerDialog {
   AlertDialog dialog=new AlertDialog.Builder(a).setTitle(title).setView(box).setNegativeButton("Cancel",null).create();
   Runnable render=()->{
    rows.removeAllViews();
-   if(allowDefault)row(a,rows,android.R.drawable.ic_menu_camera,"System default","Android camera chooser",()->{pick.onPick(null);dialog.dismiss();});
+   if(allowDefault)row(a,rows,a.getDrawable(android.R.drawable.ic_menu_camera),"System default","Android camera chooser",()->{pick.onPick(null);dialog.dismiss();});
    String q=search.getText().toString().trim().toLowerCase(Locale.ROOT);int shown=0;
    for(AppEntry e:source){
     if(!e.label.toLowerCase(Locale.ROOT).contains(q)&&!e.packageName.toLowerCase(Locale.ROOT).contains(q))continue;
-    String sub=e.packageName+(e.cameraHandler?" • Camera capture":"");
+    String sub=e.packageName+(e.cameraHandler?" โ€ข Camera capture":"");
     row(a,rows,e.icon,e.label,sub,()->{pick.onPick(e);dialog.dismiss();});
     if(++shown>=300)break;
    }
