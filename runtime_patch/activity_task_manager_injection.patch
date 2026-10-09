@@ -1,0 +1,40 @@
+--- a/lib/src/main/java/com/lody/virtual/client/hook/proxies/am/ActivityTaskManagerStub.java
++++ b/lib/src/main/java/com/lody/virtual/client/hook/proxies/am/ActivityTaskManagerStub.java
+@@ -11,7 +11,9 @@
+ 
+ import java.lang.reflect.Method;
+ 
++import mirror.android.app.ActivityTaskManager;
+ import mirror.android.app.IActivityTaskManager;
++import mirror.android.util.Singleton;
+ 
+ /**
+  * @author weishu
+@@ -21,6 +23,27 @@
+ public class ActivityTaskManagerStub extends BinderInvocationProxy {
+     public ActivityTaskManagerStub() {
+         super(IActivityTaskManager.Stub.TYPE, "activity_task");
++    }
++
++    @Override
++    public void inject() throws Throwable {
++        super.inject();
++        Object singleton = ActivityTaskManager.IActivityTaskManagerSingleton.get();
++        if (singleton != null) {
++            Singleton.mInstance.set(singleton, getInvocationStub().getProxyInterface());
++        }
++    }
++
++    @Override
++    public boolean isEnvBad() {
++        Object singleton = ActivityTaskManager.IActivityTaskManagerSingleton.get();
++        if (singleton != null) {
++            Object current = Singleton.mInstance.get(singleton);
++            if (current != getInvocationStub().getProxyInterface()) {
++                return true;
++            }
++        }
++        return super.isEnvBad();
+     }
+ 
+     @Override
