@@ -213,7 +213,7 @@
              if (activityInfo == null) {
                  VLog.e("VActivityManager", "Unable to resolve activityInfo : %s", intent);
                  if (intent.getPackage() != null && isAppPkg(intent.getPackage())) {
-@@ -547,6 +554,54 @@
+@@ -547,6 +554,68 @@
  
              }
              return false;
@@ -242,26 +242,40 @@
 +                    return;
 +                }
 +
++                PackageManager pm = VirtualCore.get().getUnHookPackageManager();
 +                Intent probe = new Intent(intent);
 +                probe.setComponent(null);
 +                probe.setPackage(selected);
-+                ResolveInfo resolved = context.getPackageManager()
-+                        .resolveActivity(probe, PackageManager.MATCH_DEFAULT_ONLY);
-+                if (resolved == null) {
-+                    context.getSharedPreferences("phantom_settings", Context.MODE_PRIVATE)
-+                            .edit().remove("camera_package").apply();
-+                    try {
-+                        new File(context.getFilesDir(), "phantom_camera_provider.txt").delete();
-+                    } catch (Throwable ignored) {
-+                    }
-+                    VLog.w("PHANToM.Camera", "Selected camera is unavailable: " + selected);
-+                    return;
-+                }
++                ResolveInfo resolved = pm.resolveActivity(probe, PackageManager.MATCH_DEFAULT_ONLY);
 +
 +                intent.setComponent(null);
-+                intent.setPackage(selected);
-+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-+                VLog.i("PHANToM.Camera", "Routing capture intent to " + selected + ": " + intent);
++                intent.setPackage(null);
++
++                if (resolved != null && resolved.activityInfo != null) {
++                    intent.setComponent(new ComponentName(
++                            resolved.activityInfo.packageName, resolved.activityInfo.name));
++                    VLog.i("PHANToM.Camera", "Routing capture intent to declared handler "
++                            + intent.getComponent());
++                } else {
++                    Intent launcher = pm.getLaunchIntentForPackage(selected);
++                    if (launcher == null || launcher.getComponent() == null) {
++                        context.getSharedPreferences("phantom_settings", Context.MODE_PRIVATE)
++                                .edit().remove("camera_package").apply();
++                        try {
++                            new File(context.getFilesDir(), "phantom_camera_provider.txt").delete();
++                        } catch (Throwable ignored) {
++                        }
++                        VLog.w("PHANToM.Camera", "Selected camera has no launchable activity: " + selected);
++                        return;
++                    }
++                    intent.setComponent(launcher.getComponent());
++                    VLog.i("PHANToM.Camera", "Routing capture intent via launcher fallback "
++                            + launcher.getComponent());
++                }
++
++                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
++                        | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
++                VLog.i("PHANToM.Camera", "Final routed capture intent: " + intent);
 +            } catch (Throwable e) {
 +                VLog.e("PHANToM.Camera", "Camera provider routing failed: " + e);
 +            }
