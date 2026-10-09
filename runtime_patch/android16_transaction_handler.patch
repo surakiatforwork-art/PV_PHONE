@@ -1,0 +1,115 @@
+--- a/lib/src/main/java/android/app/TransactionHandlerProxy.java
++++ b/lib/src/main/java/android/app/TransactionHandlerProxy.java
+@@ -15,6 +15,9 @@
+ import android.util.MergedConfiguration;
+ import android.view.DisplayAdjustments;
+ import android.view.SurfaceControl;
++import android.window.ActivityWindowInfo;
++import android.window.SplashScreenView.SplashScreenViewParcelable;
++import android.window.WindowContextInfo;
+ 
+ import com.lody.virtual.client.VClientImpl;
+ import com.lody.virtual.client.core.VirtualCore;
+@@ -165,6 +168,20 @@
+         originalHandler.handleActivityConfigurationChanged(r, overrideConfig, displayId);
+     }
+ 
++    // Android 16 exact framework signature.
++    public void handleActivityConfigurationChanged(ActivityClientRecord r, Configuration overrideConfig,
++            int displayId, ActivityWindowInfo activityWindowInfo) {
++        try {
++            java.lang.reflect.Method m = originalHandler.getClass().getMethod(
++                    "handleActivityConfigurationChanged",
++                    ActivityClientRecord.class, Configuration.class, int.class, ActivityWindowInfo.class);
++            m.invoke(originalHandler, r, overrideConfig, displayId, activityWindowInfo);
++        } catch (Throwable e) {
++            Log.w(TAG, "handleActivityConfigurationChanged exact Android 16 signature failed", e);
++            originalHandler.handleActivityConfigurationChanged(r, overrideConfig, displayId);
++        }
++    }
++
+     // Android 16: handleActivityConfigurationChanged(ACR, Configuration, int, ActivityWindowInfo)
+     // Cannot use @Override since compileSdk 30 doesn't have this method
+     public void handleActivityConfigurationChanged(ActivityClientRecord r, Configuration overrideConfig, int displayId, Object activityWindowInfo) {
+@@ -222,6 +239,19 @@
+         originalHandler.handlePictureInPictureStateChanged(r, pipState);
+     }
+ 
++    // Exact framework signature used on modern Android.
++    public void handlePictureInPictureStateChanged(ActivityClientRecord r, PictureInPictureUiState pipState) {
++        try {
++            java.lang.reflect.Method m = originalHandler.getClass().getMethod(
++                    "handlePictureInPictureStateChanged",
++                    ActivityClientRecord.class, PictureInPictureUiState.class);
++            m.invoke(originalHandler, r, pipState);
++        } catch (Throwable e) {
++            Log.w(TAG, "handlePictureInPictureStateChanged exact signature failed", e);
++        }
++    }
++
++
+     @Override
+     public boolean isHandleSplashScreenExit(IBinder token) {
+         return originalHandler.isHandleSplashScreenExit(token);
+@@ -230,6 +260,19 @@
+     @Override
+     public void handleAttachSplashScreenView(ActivityClientRecord r, Parcelable parcelable) {
+         originalHandler.handleAttachSplashScreenView(r, parcelable);
++    }
++
++    // Android 16 exact framework signature.
++    public void handleAttachSplashScreenView(ActivityClientRecord r,
++            SplashScreenViewParcelable parcelable, SurfaceControl startingWindowLeash) {
++        try {
++            java.lang.reflect.Method m = originalHandler.getClass().getMethod(
++                    "handleAttachSplashScreenView",
++                    ActivityClientRecord.class, SplashScreenViewParcelable.class, SurfaceControl.class);
++            m.invoke(originalHandler, r, parcelable, startingWindowLeash);
++        } catch (Throwable e) {
++            Log.w(TAG, "handleAttachSplashScreenView exact Android 16 signature failed", e);
++        }
+     }
+ 
+     // Android 16: handleAttachSplashScreenView(ACR, SplashScreenViewParcelable, SurfaceControl)
+@@ -514,6 +557,17 @@
+         }
+     }
+ 
++    // Android 16 exact framework signature. Object is not a valid override here.
++    public void handleWindowContextInfoChanged(IBinder clientToken, WindowContextInfo info) {
++        try {
++            java.lang.reflect.Method m = originalHandler.getClass().getMethod(
++                    "handleWindowContextInfoChanged", IBinder.class, WindowContextInfo.class);
++            m.invoke(originalHandler, clientToken, info);
++        } catch (Throwable e) {
++            Log.w(TAG, "handleWindowContextInfoChanged exact Android 16 signature failed", e);
++        }
++    }
++
+     // Android 16: handleWindowContextInfoChanged(IBinder, WindowContextInfo)
+     // Cannot use @Override since compileSdk 30 doesn't have this method
+     public void handleWindowContextInfoChanged(IBinder clientToken, Object info) {
+@@ -542,6 +596,23 @@
+         }
+     }
+ 
++    // Android 16 exact framework signature.
++    public ActivityClientRecord prepareRelaunchActivity(IBinder token, List pendingResults,
++            List pendingNewIntents, int configChanges, MergedConfiguration config,
++            boolean preserveWindow, ActivityWindowInfo activityWindowInfo) {
++        try {
++            java.lang.reflect.Method m = originalHandler.getClass().getMethod(
++                    "prepareRelaunchActivity", IBinder.class, List.class, List.class, int.class,
++                    MergedConfiguration.class, boolean.class, ActivityWindowInfo.class);
++            return (ActivityClientRecord) m.invoke(originalHandler, token, pendingResults,
++                    pendingNewIntents, configChanges, config, preserveWindow, activityWindowInfo);
++        } catch (Throwable e) {
++            Log.w(TAG, "prepareRelaunchActivity exact Android 16 signature failed", e);
++            return originalHandler.prepareRelaunchActivity(token, pendingResults, pendingNewIntents,
++                    configChanges, config, preserveWindow);
++        }
++    }
++
+     // Android 16: prepareRelaunchActivity with ActivityWindowInfo
+     // Cannot use @Override since compileSdk 30 doesn't have this method
+     public ActivityClientRecord prepareRelaunchActivity(IBinder token, List pendingResults,
