@@ -1,4 +1,4 @@
-package com.phantom.vphone;
+﻿package com.phantom.vphone;
 import android.content.*;
 import android.content.pm.*;
 import android.database.Cursor;
@@ -46,7 +46,7 @@ final class PackageImporter {
  private static File findBase(Context c,File dir){
   File direct=new File(dir,"base.apk");if(direct.exists()&&c.getPackageManager().getPackageArchiveInfo(direct.getAbsolutePath(),0)!=null)return direct;
   File[] fs=dir.listFiles((f,n)->n.toLowerCase(Locale.ROOT).endsWith(".apk"));if(fs==null)return null;
-  for(File f:fs){PackageInfo p=c.getPackageManager().getPackageArchiveInfo(f.getAbsolutePath(),0);if(p!=null&&p.applicationInfo!=null&&p.applicationInfo.splitName==null)return f;}return null;
+  for(File f:fs){PackageInfo p=c.getPackageManager().getPackageArchiveInfo(f.getAbsolutePath(),0);if(p!=null&&p.packageName!=null)return f;}return null;
  }
  private static long copy(InputStream in,File out,long remaining)throws IOException{
   if(remaining<=0)throw new IOException("Package exceeds size limit");
