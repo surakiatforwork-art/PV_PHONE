@@ -36,12 +36,13 @@ jobs:
           patch -p1 < ../runtime_patch/role_manager_invocation.patch
           patch -p1 < ../runtime_patch/activity_task_manager_injection.patch
           patch -p1 < ../runtime_patch/app_instrumentation_start_activity.patch
+          patch -p1 < ../runtime_patch/start_activity_diag.patch
       - name: Rebrand probe
         working-directory: runtime
         run: |
           sed -i 's/applicationId "io.va.exposed64"/applicationId "com.phantom.vphone.runtime"/' app/build.gradle
-          sed -i 's/versionCode 1/versionCode 45/' app/build.gradle
-          sed -i 's/versionName "1.0.0"/versionName "0.4.0-alpha-probe6"/' app/build.gradle
+          sed -i 's/versionCode 1/versionCode 46/' app/build.gradle
+          sed -i 's/versionName "1.0.0"/versionName "0.4.0-alpha-probe7"/' app/build.gradle
           sed -i 's#<string name="app_name">VirtualApp</string>#<string name="app_name">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
           sed -i 's#<string name="vxp">VirtualApp</string>#<string name="vxp">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
       - name: Build
@@ -51,6 +52,6 @@ jobs:
           ./gradlew :app:assembleDebug --no-daemon --stacktrace
       - uses: actions/upload-artifact@v4
         with:
-          name: PHANToM-runtime-probe6
+          name: PHANToM-runtime-probe7
           path: runtime/app/build/outputs/apk/debug/*-arm64-v8a.apk
           retention-days: 7
