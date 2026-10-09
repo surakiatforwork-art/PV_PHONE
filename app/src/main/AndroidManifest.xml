@@ -1,5 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-<queries><package android:name="com.meitu.meiyancamera"/><package android:name="com.transsion.camera"/></queries>
+<queries>
+<intent><action android:name="android.media.action.IMAGE_CAPTURE"/></intent>
+<intent><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent>
+</queries>
 <application android:label="PHANToM VPhone" android:theme="@android:style/Theme.Material.Light.NoActionBar" android:allowBackup="false">
 <activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity>
 </application></manifest>
