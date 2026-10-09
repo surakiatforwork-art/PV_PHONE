@@ -2,10 +2,6 @@ name: PHANToM Runtime Probe
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - '.github/workflows/phantom-runtime-probe.yml'
-      - 'runtime_patch/**'
 
 jobs:
   build:
@@ -24,20 +20,23 @@ jobs:
           curl -L https://github.com/ISEKHON/VirtualApp/archive/refs/heads/main.zip -o runtime.zip
           unzip -q runtime.zip
           mv VirtualApp-main runtime
-      - name: Apply Android 16 compatibility patch
+      - name: Apply PHANToM compatibility patches
         run: |
           mkdir -p runtime/lib/src/main/java/android/window
           mkdir -p runtime/lib/src/main/java/android/app
+          mkdir -p runtime/lib/src/main/java/com/lody/virtual/client/hook/proxies/role
           cp runtime_patch/android/window/*.java runtime/lib/src/main/java/android/window/
           cp runtime_patch/android/app/PictureInPictureUiState.java runtime/lib/src/main/java/android/app/
+          cp runtime_patch/com/lody/virtual/client/hook/proxies/role/RoleManagerStub.java runtime/lib/src/main/java/com/lody/virtual/client/hook/proxies/role/
           cd runtime
           patch -p1 < ../runtime_patch/android16_transaction_handler.patch
+          patch -p1 < ../runtime_patch/role_manager_invocation.patch
       - name: Rebrand probe
         working-directory: runtime
         run: |
           sed -i 's/applicationId "io.va.exposed64"/applicationId "com.phantom.vphone.runtime"/' app/build.gradle
-          sed -i 's/versionCode 1/versionCode 42/' app/build.gradle
-          sed -i 's/versionName "1.0.0"/versionName "0.4.0-alpha-probe3"/' app/build.gradle
+          sed -i 's/versionCode 1/versionCode 43/' app/build.gradle
+          sed -i 's/versionName "1.0.0"/versionName "0.4.0-alpha-probe4"/' app/build.gradle
           sed -i 's#<string name="app_name">VirtualApp</string>#<string name="app_name">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
           sed -i 's#<string name="vxp">VirtualApp</string>#<string name="vxp">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
       - name: Build
@@ -47,6 +46,6 @@ jobs:
           ./gradlew :app:assembleDebug --no-daemon --stacktrace
       - uses: actions/upload-artifact@v4
         with:
-          name: PHANToM-runtime-probe3
+          name: PHANToM-runtime-probe4
           path: runtime/app/build/outputs/apk/debug/*-arm64-v8a.apk
           retention-days: 7
