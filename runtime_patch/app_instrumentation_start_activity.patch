@@ -1,0 +1,106 @@
+--- a/lib/src/main/java/com/lody/virtual/client/hook/delegate/AppInstrumentation.java
++++ b/lib/src/main/java/com/lody/virtual/client/hook/delegate/AppInstrumentation.java
+@@ -10,6 +10,7 @@
+ import android.os.IBinder;
+ import android.os.PersistableBundle;
+ import android.os.RemoteException;
++import android.os.UserHandle;
+ 
+ import com.lody.virtual.client.VClientImpl;
+ import com.lody.virtual.client.core.VirtualCore;
+@@ -67,6 +68,95 @@
+     @Override
+     public boolean isEnvBad() {
+         return !(ActivityThread.mInstrumentation.get(VirtualCore.mainThread()) instanceof AppInstrumentation);
++    }
++
++    /**
++     * Android 16+ can reach ActivityTaskManager through cached framework singletons.
++     * Intercept guest-to-guest activity starts at the Instrumentation layer first so
++     * virtual activities never escape to the host package.
++     */
++    private boolean startVirtualActivity(Context who, IBinder resultTo, String resultWho,
++                                         Intent intent, int requestCode, Bundle options) {
++        if (intent == null) {
++            return false;
++        }
++        final int userId = VUserHandle.myUserId();
++        try {
++            String resolvedType = intent.resolveTypeIfNeeded(who.getContentResolver());
++            if (resolvedType != null) {
++                intent.setDataAndType(intent.getData(), resolvedType);
++            }
++        } catch (Throwable ignored) {
++        }
++
++        ActivityInfo info = VirtualCore.get().resolveActivityInfo(intent, userId);
++        if (info == null) {
++            return false;
++        }
++
++        int res = VActivityManager.get().startActivity(
++                intent, info, resultTo, options, resultWho, requestCode, userId);
++        if (res != 0 && resultTo != null && requestCode > 0) {
++            VActivityManager.get().sendActivityResult(resultTo, resultWho, requestCode);
++        }
++        VLog.i(TAG, "execStartActivity virtualized: " + intent + " -> " + info.packageName + "/" + info.name);
++        return true;
++    }
++
++    // Hidden framework API. No @Override because the public SDK stubs omit it,
++    // but the runtime method descriptor is identical and therefore overrides it.
++    public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token,
++                                            Activity target, Intent intent, int requestCode,
++                                            Bundle options) {
++        String resultWho = target != null ? mirror.android.app.Activity.mEmbeddedID.get(target) : null;
++        if (startVirtualActivity(who, token, resultWho, intent, requestCode, options)) {
++            return null;
++        }
++        try {
++            return mirror.android.app.InstrumentationActivity.execStartActivity.callWithException(
++                    base, who, contextThread, token, target, intent, requestCode, options);
++        } catch (Throwable e) {
++            if (e instanceof RuntimeException) {
++                throw (RuntimeException) e;
++            }
++            throw new RuntimeException(e);
++        }
++    }
++
++    // Hidden framework API overload using a String result target.
++    public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token,
++                                            String target, Intent intent, int requestCode,
++                                            Bundle options) {
++        if (startVirtualActivity(who, token, target, intent, requestCode, options)) {
++            return null;
++        }
++        try {
++            return mirror.android.app.InstrumentationString.execStartActivity.callWithException(
++                    base, who, contextThread, token, target, intent, requestCode, options);
++        } catch (Throwable e) {
++            if (e instanceof RuntimeException) {
++                throw (RuntimeException) e;
++            }
++            throw new RuntimeException(e);
++        }
++    }
++
++    // Hidden framework API overload that accepts an explicit UserHandle.
++    public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token,
++                                            String resultWho, Intent intent, int requestCode,
++                                            Bundle options, UserHandle user) {
++        if (startVirtualActivity(who, token, resultWho, intent, requestCode, options)) {
++            return null;
++        }
++        try {
++            return mirror.android.app.InstrumentationUser.execStartActivity.callWithException(
++                    base, who, contextThread, token, resultWho, intent, requestCode, options, user);
++        } catch (Throwable e) {
++            if (e instanceof RuntimeException) {
++                throw (RuntimeException) e;
++            }
++            throw new RuntimeException(e);
++        }
+     }
+ 
+     @Override
