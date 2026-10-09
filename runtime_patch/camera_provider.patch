@@ -1,0 +1,244 @@
+--- a/app/src/main/java/io/virtualapp/home/NewHomeActivity.java
++++ b/app/src/main/java/io/virtualapp/home/NewHomeActivity.java
+@@ -36,11 +36,15 @@
+ import io.virtualapp.home.repo.AppRepository;
+ import io.virtualapp.settings.SettingsActivity;
+ 
++import java.io.FileOutputStream;
++import java.nio.charset.StandardCharsets;
++
+ public class NewHomeActivity extends AppCompatActivity {
+ 
+     private static final String SHOW_DOZE_ALERT_KEY = "SHOW_DOZE_ALERT_KEY";
+     private static final String TAG = NewHomeActivity.class.getSimpleName();
+     private Handler mUiHandler;
++    private Toolbar mToolbar;
+ 
+     private RecyclerView mRecyclerView;
+     private ProgressBar mProgressBar;
+@@ -63,8 +67,8 @@
+         mUiHandler = new Handler(getMainLooper());
+ 
+         // Toolbar — dark gray with white text
+-        Toolbar toolbar = findViewById(R.id.home_toolbar);
+-        setSupportActionBar(toolbar);
++        mToolbar = findViewById(R.id.home_toolbar);
++        setSupportActionBar(mToolbar);
+ 
+         // Views
+         mRecyclerView = findViewById(R.id.home_recycler_view);
+@@ -229,6 +233,7 @@
+     protected void onResume() {
+         super.onResume();
+         loadApps();
++        refreshCameraSubtitle();
+         alertForDoze();
+     }
+ 
+@@ -241,7 +246,13 @@
+     @Override
+     public boolean onOptionsItemSelected(MenuItem item) {
+         int id = item.getItemId();
+-        if (id == R.id.main_setting) {
++        if (id == R.id.main_camera_provider) {
++            chooseCameraProvider();
++            return true;
++        } else if (id == R.id.main_camera_test) {
++            testSelectedCamera();
++            return true;
++        } else if (id == R.id.main_setting) {
+             startActivity(new Intent(this, SettingsActivity.class));
+             return true;
+         } else if (id == R.id.main_reboot) {
+@@ -257,6 +268,72 @@
+             return true;
+         }
+         return super.onOptionsItemSelected(item);
++    }
++
++    private static final String CAMERA_PREFS = "phantom_settings";
++    private static final String CAMERA_PACKAGE_KEY = "camera_package";
++
++    private void chooseCameraProvider() {
++        SharedPreferences prefs = getSharedPreferences(CAMERA_PREFS, MODE_PRIVATE);
++        String current = prefs.getString(CAMERA_PACKAGE_KEY, "");
++        CameraProviderPicker.show(this, current, packageName -> {
++            saveCameraProvider(packageName == null ? "" : packageName);
++            refreshCameraSubtitle();
++            String label = getCameraLabel(packageName);
++            Toast.makeText(this, "Camera Provider: " + label, Toast.LENGTH_SHORT).show();
++        });
++    }
++
++    private void saveCameraProvider(String packageName) {
++        String value = packageName == null ? "" : packageName;
++        getSharedPreferences(CAMERA_PREFS, MODE_PRIVATE)
++                .edit().putString(CAMERA_PACKAGE_KEY, value).apply();
++        try (FileOutputStream out = openFileOutput("phantom_camera_provider.txt", MODE_PRIVATE)) {
++            out.write(value.getBytes(StandardCharsets.UTF_8));
++            out.flush();
++        } catch (Throwable e) {
++            Log.w(TAG, "Unable to persist camera provider file", e);
++        }
++    }
++
++    private void testSelectedCamera() {
++        String pkg = getSharedPreferences(CAMERA_PREFS, MODE_PRIVATE)
++                .getString(CAMERA_PACKAGE_KEY, "");
++        Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
++        if (!TextUtils.isEmpty(pkg)) {
++            intent.setPackage(pkg);
++        }
++        try {
++            startActivityForResult(intent, 0x5048);
++        } catch (Throwable e) {
++            Toast.makeText(this, "Camera unavailable: " + e.getMessage(), Toast.LENGTH_LONG).show();
++        }
++    }
++
++    private void refreshCameraSubtitle() {
++        if (mToolbar == null) return;
++        String pkg = getSharedPreferences(CAMERA_PREFS, MODE_PRIVATE)
++                .getString(CAMERA_PACKAGE_KEY, "");
++        if (!TextUtils.isEmpty(pkg)) {
++            try {
++                getPackageManager().getApplicationInfo(pkg, 0);
++            } catch (Throwable e) {
++                saveCameraProvider("");
++                pkg = "";
++            }
++        }
++        mToolbar.setSubtitle("Camera: " + getCameraLabel(pkg));
++    }
++
++    private String getCameraLabel(String pkg) {
++        if (TextUtils.isEmpty(pkg)) return "System default";
++        try {
++            android.content.pm.ApplicationInfo ai = getPackageManager().getApplicationInfo(pkg, 0);
++            CharSequence label = getPackageManager().getApplicationLabel(ai);
++            return label == null ? pkg : label.toString();
++        } catch (Throwable e) {
++            return pkg;
++        }
+     }
+ 
+     @Override
+--- a/app/src/main/res/menu/menu_main.xml
++++ b/app/src/main/res/menu/menu_main.xml
+@@ -1,6 +1,17 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <menu xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:app="http://schemas.android.com/apk/res-auto">
++
++
++    <item
++        android:id="@+id/main_camera_provider"
++        android:title="Camera Provider"
++        app:showAsAction="never" />
++
++    <item
++        android:id="@+id/main_camera_test"
++        android:title="Test Camera"
++        app:showAsAction="never" />
+ 
+     <item
+         android:id="@+id/main_setting"
+--- a/lib/src/main/java/com/lody/virtual/client/hook/proxies/am/MethodProxies.java
++++ b/lib/src/main/java/com/lody/virtual/client/hook/proxies/am/MethodProxies.java
+@@ -7,6 +7,7 @@
+ import android.app.Notification;
+ import android.app.Service;
+ import android.content.ComponentName;
++import android.content.Context;
+ import android.content.IIntentReceiver;
+ import android.content.Intent;
+ import android.content.IntentFilter;
+@@ -69,6 +70,9 @@
+ import com.lody.virtual.server.interfaces.IAppRequestListener;
+ 
+ import java.io.File;
++import java.io.InputStreamReader;
++import java.io.FileInputStream;
++import java.io.BufferedReader;
+ import java.lang.ref.WeakReference;
+ import java.lang.reflect.Method;
+ import java.util.List;
+@@ -412,6 +416,7 @@
+ 
+         @Override
+         public Object call(Object who, Method method, Object... args) throws Throwable {
++            VLog.i("PHANToM.StartActivity", "intercept method=" + method + " args=" + java.util.Arrays.toString(args));
+             int intentIndex = ArrayUtils.indexOfObject(args, Intent.class, 1);
+             if (intentIndex < 0) {
+                 return ActivityManagerCompat.START_INTENT_NOT_RESOLVED;
+@@ -444,6 +449,7 @@
+                     MediaStore.ACTION_VIDEO_CAPTURE.equals(intent.getAction()) ||
+                     MediaStore.ACTION_IMAGE_CAPTURE_SECURE.equals(intent.getAction())) {
+                 handleMediaCaptureRequest(intent);
++                applySelectedCameraProvider(intent);
+             }
+ 
+             String resultWho = null;
+@@ -473,6 +479,7 @@
+             }
+ 
+             ActivityInfo activityInfo = VirtualCore.get().resolveActivityInfo(intent, userId);
++            VLog.i("PHANToM.StartActivity", "resolved=" + (activityInfo == null ? "null" : activityInfo.packageName + "/" + activityInfo.name) + " intent=" + intent);
+             if (activityInfo == null) {
+                 VLog.e("VActivityManager", "Unable to resolve activityInfo : %s", intent);
+                 if (intent.getPackage() != null && isAppPkg(intent.getPackage())) {
+@@ -547,6 +554,54 @@
+ 
+             }
+             return false;
++        }
++
++        private String readSelectedCameraProvider(Context context) {
++            File file = new File(context.getFilesDir(), "phantom_camera_provider.txt");
++            if (file.isFile()) {
++                try (BufferedReader reader = new BufferedReader(
++                        new InputStreamReader(new FileInputStream(file), "UTF-8"))) {
++                    String value = reader.readLine();
++                    return value == null ? "" : value.trim();
++                } catch (Throwable e) {
++                    VLog.w("PHANToM.Camera", "Unable to read provider file: " + e);
++                }
++            }
++            return context.getSharedPreferences("phantom_settings", Context.MODE_PRIVATE)
++                    .getString("camera_package", "");
++        }
++
++        private void applySelectedCameraProvider(Intent intent) {
++            try {
++                Context context = getHostContext();
++                String selected = readSelectedCameraProvider(context);
++                if (TextUtils.isEmpty(selected) || selected.equals(getHostPkg())) {
++                    return;
++                }
++
++                Intent probe = new Intent(intent);
++                probe.setComponent(null);
++                probe.setPackage(selected);
++                ResolveInfo resolved = context.getPackageManager()
++                        .resolveActivity(probe, PackageManager.MATCH_DEFAULT_ONLY);
++                if (resolved == null) {
++                    context.getSharedPreferences("phantom_settings", Context.MODE_PRIVATE)
++                            .edit().remove("camera_package").apply();
++                    try {
++                        new File(context.getFilesDir(), "phantom_camera_provider.txt").delete();
++                    } catch (Throwable ignored) {
++                    }
++                    VLog.w("PHANToM.Camera", "Selected camera is unavailable: " + selected);
++                    return;
++                }
++
++                intent.setComponent(null);
++                intent.setPackage(selected);
++                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
++                VLog.i("PHANToM.Camera", "Routing capture intent to " + selected + ": " + intent);
++            } catch (Throwable e) {
++                VLog.e("PHANToM.Camera", "Camera provider routing failed: " + e);
++            }
+         }
+ 
+         private void handleMediaCaptureRequest(Intent intent) {
