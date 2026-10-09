@@ -1,5 +1,3 @@
-[Reading 74 lines from start (total: 74 lines, 0 remaining)]
-
 name: PHANToM VPhone RC
 
 on:
@@ -74,5 +72,3 @@ jobs:
           name: PHANToM-VPhone-v0.4.0-alpha-rc2-universal
           path: runtime/app/build/outputs/apk/debug/*-universal.apk
           retention-days: 7
-
-[executed on device: PHANToM (60ef0451-feba-4882-8849-367db28e542d)]
