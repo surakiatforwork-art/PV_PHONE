@@ -5,12 +5,14 @@ on:
   push:
     paths:
       - '.github/workflows/phantom-runtime-probe.yml'
+      - 'runtime_patch/**'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
           java-version: '17'
@@ -22,12 +24,18 @@ jobs:
           curl -L https://github.com/ISEKHON/VirtualApp/archive/refs/heads/main.zip -o runtime.zip
           unzip -q runtime.zip
           mv VirtualApp-main runtime
+      - name: Apply Android 16 compatibility patch
+        run: |
+          mkdir -p runtime/lib/src/main/java/android/window
+          cp runtime_patch/android/window/*.java runtime/lib/src/main/java/android/window/
+          cd runtime
+          patch -p1 < ../runtime_patch/android16_transaction_handler.patch
       - name: Rebrand probe
         working-directory: runtime
         run: |
           sed -i 's/applicationId "io.va.exposed64"/applicationId "com.phantom.vphone.runtime"/' app/build.gradle
-          sed -i 's/versionCode 1/versionCode 40/' app/build.gradle
-          sed -i 's/versionName "1.0.0"/versionName "0.4.0-alpha-probe"/' app/build.gradle
+          sed -i 's/versionCode 1/versionCode 41/' app/build.gradle
+          sed -i 's/versionName "1.0.0"/versionName "0.4.0-alpha-probe2"/' app/build.gradle
           sed -i 's#<string name="app_name">VirtualApp</string>#<string name="app_name">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
           sed -i 's#<string name="vxp">VirtualApp</string>#<string name="vxp">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
       - name: Build
@@ -37,6 +45,6 @@ jobs:
           ./gradlew :app:assembleDebug --no-daemon --stacktrace
       - uses: actions/upload-artifact@v4
         with:
-          name: PHANToM-runtime-probe
+          name: PHANToM-runtime-probe2
           path: runtime/app/build/outputs/apk/debug/*-arm64-v8a.apk
           retention-days: 7
