@@ -1,4 +1,4 @@
-﻿package com.phantom.vphone;
+package com.phantom.vphone;
 import android.app.*;
 import android.content.*;
 import android.graphics.drawable.Drawable;
