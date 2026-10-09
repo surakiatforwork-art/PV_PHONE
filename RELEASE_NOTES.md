@@ -1,0 +1,2 @@
+# PHANToM VPhone v0.1.0-alpha
+Research preview: camera-intent test harness only. It does not yet install or virtualize guest apps; login passthrough and guest camera interception are not implemented. Build verification is handled by GitHub Actions.
