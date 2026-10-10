@@ -4,8 +4,10 @@ on:
     paths:
       - 'runtime_overlay/ConnectivityStub.java'
       - 'runtime_overlay/GuestLocationHooks.java'
+      - 'runtime_overlay/WifiScannerStub.java'
       - 'tests/test_connectivity_uid.py'
       - 'tests/test_location_boundary.py'
+      - 'tests/test_wifi_scanner_boundary.py'
       - '.github/workflows/connectivity-contract.yml'
   workflow_dispatch:
 jobs:
@@ -22,3 +24,4 @@ jobs:
           python-version: '3.11'
       - run: python tests/test_connectivity_uid.py -v
       - run: python tests/test_location_boundary.py -v
+      - run: python tests/test_wifi_scanner_boundary.py -v
