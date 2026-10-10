@@ -76,6 +76,7 @@ jobs:
           patch -p1 < ../runtime_patch/guest_service_identity.patch
           patch -p1 < ../runtime_patch/pending_intent_feature.patch
           patch -p1 < ../runtime_patch/guest_provider_boundary.patch
+          patch -p1 < ../runtime_patch/authentic_apk_signing.patch
           cd ..
           cp runtime_overlay/BaseVirtualInitializer.java             runtime/app/src/main/java/io/virtualapp/delegate/BaseVirtualInitializer.java
           cp runtime_overlay/GmsSupport.java             runtime/lib/src/main/java/com/lody/virtual/GmsSupport.java

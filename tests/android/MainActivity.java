@@ -32,8 +32,21 @@ public class MainActivity extends Activity {
   direct.setOnClickListener(v->transition(false));
   Button pending=new Button(this);pending.setText("Test pending activity");root.addView(pending);
   pending.setOnClickListener(v->transition(true));
+  Button signing=new Button(this);signing.setText("Test APK signing");root.addView(signing);
+  signing.setOnClickListener(v->testSigning());
   status.setText("CAMERA="+getPackageManager().checkPermission("android.permission.CAMERA",getPackageName())+" SELF="+checkSelfPermission("android.permission.CAMERA")+" UID="+android.os.Process.myUid());
   setContentView(root);
+ }
+ void testSigning() {
+  try {
+   android.content.pm.PackageInfo info=getPackageManager().getPackageInfo(getPackageName(),android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES|android.content.pm.PackageManager.GET_SIGNATURES);
+   if(info.signingInfo==null||info.signingInfo.getApkContentsSigners().length==0)throw new AssertionError("No signing identity");
+   byte[] digest=java.security.MessageDigest.getInstance("SHA-256").digest(info.signingInfo.getApkContentsSigners()[0].toByteArray());
+   StringBuilder hash=new StringBuilder();for(byte b:digest)hash.append(String.format(java.util.Locale.ROOT,"%02x",b&255));
+   if(!info.signatures[0].equals(info.signingInfo.getApkContentsSigners()[0]))throw new AssertionError("Legacy signer mismatch");
+   getPackageManager().getPackageInstaller().getStagedSessions();
+   status.setText("SIGNING PASS sha256="+hash);
+  }catch(Throwable e){status.setText("SIGNING FAIL: "+e);android.util.Log.e("PHANToM.Probe","signing",e);}
  }
  void transition(boolean pending) {
   try {
