@@ -1,0 +1,76 @@
+--- a/app/src/main/java/io/virtualapp/settings/AppManageActivity.java
++++ b/app/src/main/java/io/virtualapp/settings/AppManageActivity.java
+@@ -164,6 +164,13 @@
+                 case R.id.action_redirect:
+                     showStorageRedirectDialog(appManageInfo);
+                     break;
++                case R.id.action_permissions:
++                    startActivity(GuestPermissionSettingsActivity.createIntent(
++                            this,
++                            appManageInfo.pkgName,
++                            appManageInfo.userId,
++                            appManageInfo.getName()));
++                    break;
+             }
+             return false;
+         });
+--- a/app/src/main/res/menu/app_manage_menu.xml
++++ b/app/src/main/res/menu/app_manage_menu.xml
+@@ -18,4 +18,12 @@
+         android:orderInCategory="100"
+         android:title="@string/app_manage_redirect_on"
+         app:showAsAction="withText" />
++
++
++    <item
++        android:id="@+id/action_permissions"
++        android:orderInCategory="90"
++        android:title="Permissions"
++        app:showAsAction="withText" />
++
+ </menu>--- a/lib/src/main/java/com/lody/virtual/server/pm/VPackageManagerService.java
++++ b/lib/src/main/java/com/lody/virtual/server/pm/VPackageManagerService.java
+@@ -13,11 +13,13 @@
+ import android.content.pm.ResolveInfo;
+ import android.content.pm.ServiceInfo;
+ import android.os.Build;
++import android.os.Environment;
+ import android.os.Parcel;
+ import android.os.RemoteException;
+ import android.text.TextUtils;
+ import android.util.Log;
+ 
++import com.lody.virtual.helper.utils.GuestPermissionPolicy;
+ import com.lody.virtual.client.core.VirtualCore;
+ import com.lody.virtual.client.fixer.ComponentFixer;
+ import com.lody.virtual.client.stub.VASettings;
+@@ -239,7 +241,28 @@
+                 || "android.permission.INTERACT_ACROSS_USERS_FULL".equals(permName)) {
+             return PackageManager.PERMISSION_DENIED;
+         }
+-        return VirtualCore.get().getPackageManager().checkPermission(permName, VirtualCore.get().getHostPkg());
++
++        synchronized (mPackages) {
++            VPackage guest = mPackages.get(pkgName);
++            if (guest != null && guest.requestedPermissions != null
++                    && !guest.requestedPermissions.contains(permName)) {
++                return PackageManager.PERMISSION_DENIED;
++            }
++        }
++
++        if (GuestPermissionPolicy.isDenied(pkgName, userId, permName)) {
++            return PackageManager.PERMISSION_DENIED;
++        }
++
++        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
++                && Environment.isExternalStorageManager()
++                && ("android.permission.READ_EXTERNAL_STORAGE".equals(permName)
++                || "android.permission.WRITE_EXTERNAL_STORAGE".equals(permName))) {
++            return PackageManager.PERMISSION_GRANTED;
++        }
++
++        return VirtualCore.get().getPackageManager()
++                .checkPermission(permName, VirtualCore.get().getHostPkg());
+     }
+ 
+     @Override
