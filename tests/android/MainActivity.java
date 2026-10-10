@@ -22,8 +22,35 @@ public class MainActivity extends Activity {
   thumb.setOnClickListener(v->capture(false));output.setOnClickListener(v->capture(true));
   Button channels=new Button(this);channels.setText("Test notification channels");root.addView(channels);
   channels.setOnClickListener(v->testChannels());
+  Button locales=new Button(this);locales.setText("Test guest locales");root.addView(locales);
+  locales.setOnClickListener(v->testLocales());
+  Button provider=new Button(this);provider.setText("Test guest provider");root.addView(provider);
+  provider.setOnClickListener(v->testProvider());
   status.setText("CAMERA="+getPackageManager().checkPermission("android.permission.CAMERA",getPackageName())+" SELF="+checkSelfPermission("android.permission.CAMERA")+" UID="+android.os.Process.myUid());
   setContentView(root);
+ }
+ void testLocales() {
+  try {
+   Object manager=getSystemService("locale");
+   java.lang.reflect.Method get=manager.getClass().getMethod("getApplicationLocales");
+   java.lang.reflect.Method set=manager.getClass().getMethod("setApplicationLocales",LocaleList.class);
+   LocaleList initial=(LocaleList)get.invoke(manager);
+   try {
+    set.invoke(manager,LocaleList.forLanguageTags("fr-FR"));
+    if(!"fr-FR".equals(((LocaleList)get.invoke(manager)).toLanguageTags()))throw new AssertionError("Locale roundtrip");
+   }finally{set.invoke(manager,initial);}
+   status.setText("LOCALES PASS initial="+initial.toLanguageTags()+" UID="+android.os.Process.myUid());
+  }catch(Throwable e){status.setText("LOCALES FAIL: "+e);android.util.Log.e("PHANToM.Probe","locales",e);}
+ }
+ void testProvider() {
+  try {
+   String other=getPackageName().endsWith("other")?"com.phantom.releaseprobe":"com.phantom.releaseprobeother";
+   try(android.database.Cursor cursor=getContentResolver().query(Uri.parse("content://"+other+".capture/identity"),null,null,null,null)) {
+    if(cursor==null||!cursor.moveToFirst())throw new AssertionError("No provider result");
+    if(cursor.getInt(0)!=android.os.Process.myUid()||!getPackageName().equals(cursor.getString(1)))throw new AssertionError("Caller identity mismatch: "+cursor.getInt(0)+" / "+cursor.getString(1));
+    status.setText("PROVIDER PASS UID="+cursor.getInt(0)+" package="+cursor.getString(1));
+   }
+  }catch(Throwable e){status.setText("PROVIDER FAIL: "+e);android.util.Log.e("PHANToM.Probe","provider",e);}
  }
  void testChannels() {
   try {

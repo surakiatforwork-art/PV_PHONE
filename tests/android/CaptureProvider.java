@@ -3,7 +3,11 @@ import android.content.*;import android.database.Cursor;import android.net.Uri;i
 public class CaptureProvider extends ContentProvider {
  public boolean onCreate(){return true;}
  public String getType(Uri uri){return "image/jpeg";}
- public Cursor query(Uri uri,String[] p,String s,String[] a,String o){return null;}
+ public Cursor query(Uri uri,String[] p,String s,String[] a,String o){
+  android.database.MatrixCursor result=new android.database.MatrixCursor(new String[]{"uid","package"});
+  result.addRow(new Object[]{android.os.Binder.getCallingUid(),getCallingPackage()});
+  return result;
+ }
  public Uri insert(Uri u,ContentValues v){return null;}
  public int update(Uri u,ContentValues v,String s,String[] a){return 0;}
  public int delete(Uri u,String s,String[] a){return 0;}

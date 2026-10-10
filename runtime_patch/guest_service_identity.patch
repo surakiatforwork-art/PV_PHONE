@@ -1,0 +1,61 @@
+--- a/lib/src/main/java/com/lody/virtual/client/core/InvocationStubManager.java
++++ b/lib/src/main/java/com/lody/virtual/client/core/InvocationStubManager.java
+@@ -204,6 +204,9 @@
+                 if (Build.VERSION.SDK_INT >= 31) {
+                     addInjector(new com.lody.virtual.client.hook.proxies.permission.PermissionManagerStub());
+                 }
++                if (Build.VERSION.SDK_INT >= 33) {
++                    addInjector(new com.lody.virtual.client.hook.proxies.locale.LocaleManagerStub());
++                }
+ 
+             	// http://aospxref.com/android-10.0.0_r47/xref/frameworks/base/core/java/android/os/IDeviceIdentifiersPolicyService.aidl#24
+             	addInjector(new DeviceIdentifiersPolicyServiceStub());
+--- a/lib/src/main/java/com/lody/virtual/client/hook/providers/ProviderHook.java
++++ b/lib/src/main/java/com/lody/virtual/client/hook/providers/ProviderHook.java
+@@ -250,6 +250,10 @@
+         ProviderHook fetch(boolean external, IInterface provider);
+     }
+ 
++    protected String attributionPackage() { return VirtualCore.get().getHostPkg(); }
++
++    protected int attributionUid() { return VirtualCore.get().myUid(); }
++
+     private void tryFixAttributionSource(Object[] args) {
+         if (args == null || args.length == 0) {
+             return;
+@@ -262,6 +266,16 @@
+             return;
+         }
+ 
+-        ContextFixer.fixAttributionSource(attribution, VirtualCore.get().getHostPkg(), VirtualCore.get().myUid());
++        try {
++            // withPackageName copies the root without unparceling (which itself verifies Binder UID).
++            // Preserve the original context and all downstream attribution identities.
++            Object copy = attribution.getClass().getMethod("withPackageName", String.class)
++                    .invoke(attribution, attributionPackage());
++            Object state = com.lody.virtual.helper.utils.Reflect.on(copy).get("mAttributionSourceState");
++            com.lody.virtual.helper.utils.Reflect.on(state).set("uid", attributionUid());
++            args[0] = copy;
++        } catch (Throwable e) {
++            throw new IllegalStateException("Unable to translate provider caller identity", e);
++        }
+     }
+ }
+--- a/lib/src/main/java/com/lody/virtual/client/hook/providers/InternalProviderHook.java
++++ b/lib/src/main/java/com/lody/virtual/client/hook/providers/InternalProviderHook.java
+@@ -6,6 +6,15 @@
+ 
+ public class InternalProviderHook extends ProviderHook {
+ 
++    @Override protected String attributionPackage() {
++        return com.lody.virtual.client.VClientImpl.get().getCurrentPackage();
++    }
++
++    @Override protected int attributionUid() {
++        // NativeEngine exposes the caller's base virtual UID inside virtual provider processes.
++        return com.lody.virtual.client.VClientImpl.get().getBaseVUid();
++    }
++
+     public InternalProviderHook(Object base) {
+         super(base);
+     }
