@@ -1,0 +1,37 @@
+--- a/lib/src/main/java/com/lody/virtual/client/hook/delegate/AppInstrumentation.java
++++ b/lib/src/main/java/com/lody/virtual/client/hook/delegate/AppInstrumentation.java
+@@ -91,6 +91,12 @@
+ 
+         ActivityInfo info = VirtualCore.get().resolveActivityInfo(intent, userId);
+         if (info == null) {
++            String target = intent.getComponent() == null ? intent.getPackage()
++                    : intent.getComponent().getPackageName();
++            if (target != null && VirtualCore.get().isAppInstalled(target)) {
++                android.util.Log.w("PHANToM.Activity", "Unresolved virtual activity in " + target);
++                throw new android.content.ActivityNotFoundException("Unresolved virtual activity in " + target);
++            }
+             return false;
+         }
+ 
+@@ -99,7 +105,7 @@
+         if (res != 0 && resultTo != null && requestCode > 0) {
+             VActivityManager.get().sendActivityResult(resultTo, resultWho, requestCode);
+         }
+-        VLog.i(TAG, "execStartActivity virtualized: " + intent + " -> " + info.packageName + "/" + info.name);
++        android.util.Log.i("PHANToM.Activity", "execStartActivity virtualized: " + info.packageName + "/" + info.name);
+         return true;
+     }
+ 
+--- a/lib/src/main/java/com/lody/virtual/client/hook/proxies/am/MethodProxies.java
++++ b/lib/src/main/java/com/lody/virtual/client/hook/proxies/am/MethodProxies.java
+@@ -483,7 +483,9 @@
+             VLog.i("PHANToM.StartActivity", "resolved=" + (activityInfo == null ? "null" : activityInfo.packageName + "/" + activityInfo.name) + " intent=" + intent);
+             if (activityInfo == null) {
+                 VLog.e("VActivityManager", "Unable to resolve activityInfo : %s", intent);
+-                if (intent.getPackage() != null && isAppPkg(intent.getPackage())) {
++                String targetPackage = intent.getComponent() == null ? intent.getPackage()
++                        : intent.getComponent().getPackageName();
++                if (targetPackage != null && isAppPkg(targetPackage)) {
+                     return ActivityManagerCompat.START_INTENT_NOT_RESOLVED;
+                 }
+                 
