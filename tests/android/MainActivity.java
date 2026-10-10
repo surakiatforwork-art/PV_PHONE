@@ -109,7 +109,7 @@ public class MainActivity extends Activity {
   try {
    Intent i=new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
    if(output) {
-    Uri uri=Uri.parse("content://com.phantom.releaseprobe.capture/photo");
+    Uri uri=Uri.parse("content://"+getPackageName()+".capture/photo");
     i.putExtra(MediaStore.EXTRA_OUTPUT,uri);
     i.setClipData(ClipData.newRawUri("capture",uri));
     i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);

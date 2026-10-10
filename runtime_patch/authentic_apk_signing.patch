@@ -1,6 +1,6 @@
 --- a/lib/src/main/java/com/lody/virtual/server/pm/parser/PackageParserEx.java
 +++ b/lib/src/main/java/com/lody/virtual/server/pm/parser/PackageParserEx.java
-@@ -50,50 +50,44 @@
+@@ -50,50 +50,46 @@
  
      private static final ArrayMap<String, String[]> sSharedLibCache = new ArrayMap<>();
  
@@ -69,6 +69,8 @@
 +        synchronized (verifiedSigning) {
 +            if (verifiedSigning.containsKey(p)) return;
 +            File apk = VEnvironment.getPackageResourcePath(p.packageName);
++            // DEPEND_SYSTEM installs use the registered source APK instead of a private copy.
++            if (!apk.isFile() && p.baseCodePath != null) apk = new File(p.baseCodePath);
 +            PackageInfo signed = VirtualCore.get().getUnHookPackageManager().getPackageArchiveInfo(
 +                    apk.getPath(), PackageManager.GET_SIGNATURES
 +                            | (Build.VERSION.SDK_INT >= 28 ? PackageManager.GET_SIGNING_CERTIFICATES : 0));
@@ -85,7 +87,7 @@
              }
          }
      }
-@@ -279,7 +273,7 @@
+@@ -279,7 +275,7 @@
              }
              // Ensure mSignatures is set even if mirror extraction failed
              if (cache.mSignatures == null) {
@@ -94,7 +96,7 @@
              }
          }
          cache.mAppMetaData = p.mAppMetaData;
-@@ -498,6 +492,7 @@
+@@ -498,6 +494,7 @@
          boolean hasGetSigningInfoFlag = BuildCompat.isPie() && (flags & PackageManager.GET_SIGNING_CERTIFICATES) != 0;
  
          if (hasGetSignatureFlag || hasGetSigningInfoFlag) {

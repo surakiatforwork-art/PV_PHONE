@@ -28,7 +28,12 @@ with tempfile.TemporaryDirectory() as directory:
     sources = temp / "sources"
     sources.mkdir()
     for name in ("MainActivity.java", "CaptureProvider.java", "TransitionActivity.java", "AndroidManifest.xml"):
-        (sources / name).write_text((root / name).read_text().replace("com.phantom.releaseprobe", package))
+        content = (root / name).read_text(encoding="utf-8")
+        if name.endswith(".java"):
+            content = content.replace("package com.phantom.releaseprobe;", "package " + package + ";")
+        else:
+            content = content.replace("com.phantom.releaseprobe", package)
+        (sources / name).write_text(content, encoding="utf-8")
     run("javac", "-source", "8", "-target", "8", "-classpath", jar,
         "-d", classes, *sources.glob("*.java"))
     run("java", "-cp", tools / "lib/d8.jar", "com.android.tools.r8.D8",
