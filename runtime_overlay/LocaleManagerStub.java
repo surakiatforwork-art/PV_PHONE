@@ -24,7 +24,7 @@ public final class LocaleManagerStub extends BinderInvocationProxy {
         return app.getSharedPreferences("phantom_app_locales", Context.MODE_PRIVATE);
     }
     private static void ownPackage(Object[] args) {
-        if (!getAppPkg().equals(args[0])) throw new SecurityException("Cross-guest locale access is unsupported");
+        if (!VClientImpl.get().getCurrentPackage().equals(args[0])) throw new SecurityException("Cross-guest locale access is unsupported");
     }
     @Override protected void onBindMethods() {
         super.onBindMethods();
