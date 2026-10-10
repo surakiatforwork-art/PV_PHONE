@@ -1,0 +1,422 @@
+--- a/app/src/main/java/io/virtualapp/home/LoadingActivity.java
++++ b/app/src/main/java/io/virtualapp/home/LoadingActivity.java
+@@ -51,11 +51,14 @@
+     private EatBeansView loadingView;
+ 
+     private static final int REQUEST_PERMISSION_CODE = 100;
++    private static final int REQUEST_SPECIAL_PERMISSION_CODE = 101;
+ 
+     private Intent intentToLaunch;
+     private int userToLaunch;
+ 
+     private long start;
++    private boolean runtimePermissionsAttempted;
++    private final java.util.Set<String> attemptedSpecialPermissions = new java.util.HashSet<>();
+ 
+     public static boolean launch(Context context, String packageName, int userId) {
+         Intent intent = VirtualCore.get().getLaunchIntent(packageName, userId);
+@@ -128,79 +131,81 @@
+     }
+ 
+     private void checkAndLaunch(Intent intent, int userId) {
+-        final int RUNTIME_PERMISSION_API_LEVEL = android.os.Build.VERSION_CODES.M;
+-
+-        if (android.os.Build.VERSION.SDK_INT < RUNTIME_PERMISSION_API_LEVEL) {
+-            // the device is below Android M, the permissions are granted when install, start directly
+-            Log.i(TAG, "device's api level below Android M, do not need runtime permission.");
++        intentToLaunch = intent;
++        userToLaunch = userId;
++
++        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M) {
+             launchActivityWithDelay(intent, userId);
+             return;
+         }
+ 
+-        // The device is above android M, support runtime permission.
+-        String packageName = appModel.packageName;
+-        String name = appModel.name;
+-
+-        // analyze permission
+         try {
+-            ApplicationInfo applicationInfo = VPackageManager.get().getApplicationInfo(packageName, 0, 0);
+-            int targetSdkVersion = applicationInfo.targetSdkVersion;
+-            Log.i(TAG, "target package: " + packageName + " targetSdkVersion: " + targetSdkVersion);
+-
+-            if (targetSdkVersion >= RUNTIME_PERMISSION_API_LEVEL) {
+-                Log.i(TAG, "target package support runtime permission, launch directly.");
+-                launchActivityWithDelay(intent, userId);
+-            } else {
+-
+-                intentToLaunch = intent;
+-                userToLaunch = userId;
+-
+-                PackageInfo packageInfo = VPackageManager.get().getPackageInfo(packageName, PackageManager.GET_PERMISSIONS, 0);
+-                String[] requestedPermissions = packageInfo.requestedPermissions;
+-
+-                Set<String> dangerousPermissions = new HashSet<>();
+-                for (String requestedPermission : requestedPermissions) {
+-                    if (VPackage.PermissionComponent.DANGEROUS_PERMISSION.contains(requestedPermission)) {
+-                        // dangerous permission, check it
+-                        if (ContextCompat.checkSelfPermission(this, requestedPermission) != PackageManager.PERMISSION_GRANTED) {
+-                            dangerousPermissions.add(requestedPermission);
+-                        } else {
+-                            Log.i(TAG, "permission: " + requestedPermission + " is granted, ignore.");
+-                        }
+-                    }
+-                }
+-
+-                if (dangerousPermissions.isEmpty()) {
+-                    Log.i(TAG, "all permission are granted, launch directly.");
+-                    // all permission are granted, launch directly.
+-                    launchActivityWithDelay(intent, userId);
+-                } else {
+-                    // tell user that this app need that permission
+-                    Log.i(TAG, "request permission: " + dangerousPermissions);
+-
+-                    AlertDialog alertDialog = new AlertDialog.Builder(this, R.style.Theme_AppCompat_DayNight_Dialog_Alert)
+-                            .setTitle(R.string.permission_tip_title)
+-                            .setMessage(getResources().getString(R.string.permission_tips_content, name))
+-                            .setPositiveButton(R.string.permission_tips_confirm, (dialog, which) -> {
+-                                String[] permissionToRequest = dangerousPermissions.toArray(new String[dangerousPermissions.size()]);
+-                                try {
+-                                    ActivityCompat.requestPermissions(this, permissionToRequest, REQUEST_PERMISSION_CODE);
+-                                } catch (Throwable ignored) {
+-                                }
+-                            })
+-                            .create();
+-                    try {
+-                        alertDialog.show();
+-                    } catch (Throwable ignored) {
+-                        // BadTokenException.
+-                        finish();
+-                        Toast.makeText(this, getResources().getString(R.string.start_app_failed, appModel.name), Toast.LENGTH_SHORT).show();
+-                    }
+-                }
+-            }
++            GuestPermissionBroker.Plan plan = GuestPermissionBroker.buildPlan(
++                    this,
++                    appModel.packageName,
++                    runtimePermissionsAttempted,
++                    attemptedSpecialPermissions);
++
++            if (!plan.runtimePermissions.isEmpty()) {
++                runtimePermissionsAttempted = true;
++                String[] permissions = plan.runtimePermissions.toArray(new String[0]);
++                Log.i(TAG, "Requesting host runtime permissions for guest "
++                        + appModel.packageName + ": " + plan.runtimePermissions);
++
++                new AlertDialog.Builder(this, R.style.Theme_AppCompat_DayNight_Dialog_Alert)
++                        .setTitle(R.string.permission_tip_title)
++                        .setMessage("แอป " + appModel.name
++                                + " ต้องการสิทธิ์จาก Android สิทธิ์ที่อนุญาตจะถูกมอบให้ PHANToM VPhone "
++                                + "และใช้กับ Guest App นี้")
++                        .setPositiveButton(R.string.permission_tips_confirm, (dialog, which) -> {
++                            try {
++                                ActivityCompat.requestPermissions(
++                                        this, permissions, REQUEST_PERMISSION_CODE);
++                            } catch (Throwable e) {
++                                Log.w(TAG, "Runtime permission request failed", e);
++                                continuePermissionFlow();
++                            }
++                        })
++                        .setNegativeButton(android.R.string.cancel, (dialog, which) ->
++                                continuePermissionFlow())
++                        .setOnCancelListener(dialog -> continuePermissionFlow())
++                        .show();
++                return;
++            }
++
++            if (plan.specialIntent != null && plan.specialKey != null) {
++                attemptedSpecialPermissions.add(plan.specialKey);
++                new AlertDialog.Builder(this, R.style.Theme_AppCompat_DayNight_Dialog_Alert)
++                        .setTitle("Special access")
++                        .setMessage(GuestPermissionBroker.describeSpecial(plan.specialKey))
++                        .setPositiveButton(R.string.permission_tips_confirm, (dialog, which) -> {
++                            try {
++                                startActivityForResult(
++                                        plan.specialIntent, REQUEST_SPECIAL_PERMISSION_CODE);
++                            } catch (Throwable e) {
++                                Log.w(TAG, "Special permission page failed", e);
++                                continuePermissionFlow();
++                            }
++                        })
++                        .setNegativeButton(android.R.string.cancel, (dialog, which) ->
++                                continuePermissionFlow())
++                        .setOnCancelListener(dialog -> continuePermissionFlow())
++                        .show();
++                return;
++            }
++
++            launchActivityWithDelay(intent, userId);
+         } catch (Throwable e) {
+-            Log.e(TAG, "check permission failed: ", e);
++            Log.e(TAG, "Permission broker failed", e);
+             launchActivityWithDelay(intent, userId);
++        }
++    }
++
++    private void continuePermissionFlow() {
++        if (intentToLaunch != null) {
++            checkAndLaunch(intentToLaunch, userToLaunch);
++        } else {
++            finish();
+         }
+     }
+ 
+@@ -227,51 +232,31 @@
+     }
+ 
+     @Override
+-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
++    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
++                                           @NonNull int[] grantResults) {
+         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+         if (requestCode == REQUEST_PERMISSION_CODE) {
+             boolean allGranted = true;
+-            for (int grantResult : grantResults) {
+-                if (grantResult == PackageManager.PERMISSION_DENIED) {
++            for (int result : grantResults) {
++                if (result != PackageManager.PERMISSION_GRANTED) {
+                     allGranted = false;
+                     break;
+                 }
+             }
+-
+-            if (allGranted) {
+-                if (intentToLaunch == null) {
+-                    Toast.makeText(this, getResources().getString(R.string.start_app_failed, appModel.name), Toast.LENGTH_SHORT).show();
+-                    finish();
+-                } else {
+-                    launchActivityWithDelay(intentToLaunch, userToLaunch);
+-                }
+-            } else {
+-                // 提示用户，targetSdkVersion < 23 无法使用运行时权限
+-                Log.i(TAG, "can not use runtime permission, you must grant all permission, otherwise the app may not work!");
+-
+-                final String tag = "permission_tips_" + appModel.packageName.replaceAll("\\.", "_");
+-                // TODO find a device figuring out why some permissions are not detected.
+-                if (!Once.beenDone(tag)) {
+-                    AlertDialog alertDialog = new AlertDialog.Builder(this, R.style.Theme_AppCompat_DayNight_Dialog_Alert)
+-                            .setTitle(android.R.string.dialog_alert_title)
+-                            .setMessage(getResources().getString(R.string.permission_denied_tips_content, appModel.name))
+-                            .setPositiveButton(R.string.permission_tips_confirm, (dialog, which) -> {
+-                                finish();
+-                                Once.markDone(tag);
+-                                launchActivityWithDelay(intentToLaunch, userToLaunch);
+-                            })
+-                            .create();
+-                    try {
+-                        alertDialog.show();
+-                    } catch (Throwable ignored) {
+-                        // BadTokenException.
+-                        Toast.makeText(this, getResources().getString(R.string.start_app_failed, appModel.name), Toast.LENGTH_SHORT).show();
+-                    }
+-                } else {
+-                    launchActivityWithDelay(intentToLaunch, userToLaunch);
+-                    finish();
+-                }
+-            }
++            if (!allGranted) {
++                Toast.makeText(this,
++                        "บางสิทธิ์ไม่ได้รับอนุญาต Guest App อาจใช้งานฟังก์ชันบางส่วนไม่ได้",
++                        Toast.LENGTH_LONG).show();
++            }
++            continuePermissionFlow();
++        }
++    }
++
++    @Override
++    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
++        super.onActivityResult(requestCode, resultCode, data);
++        if (requestCode == REQUEST_SPECIAL_PERMISSION_CODE) {
++            continuePermissionFlow();
+         }
+     }
+ 
+@@ -287,11 +272,11 @@
+             VUiKit.defer().when(() -> {
+             }).done((v) -> {
+                 if (!isFinishing()) {
+-                    Toast.makeText(getApplicationContext(), getResources().getString(R.string.start_app_failed, packageName),
++                    Toast.makeText(getApplicationContext(),
++                            getResources().getString(R.string.start_app_failed, packageName),
+                             Toast.LENGTH_SHORT).show();
+                 }
+             });
+-
+             finish();
+         }
+     };
+@@ -316,3 +301,4 @@
+         }
+     }
+ }
++
+--- a/app/src/main/java/io/virtualapp/settings/SettingsActivity.java
++++ b/app/src/main/java/io/virtualapp/settings/SettingsActivity.java
+@@ -97,42 +97,6 @@
+                 return false;
+             });
+ 
+-            moduleManage.setOnPreferenceClickListener(preference -> {
+-                try {
+-                    Intent t = new Intent();
+-                    t.setComponent(new ComponentName("de.robv.android.xposed.installer", "de.robv.android.xposed.installer.WelcomeActivity"));
+-                    t.putExtra("fragment", 1);
+-                    int ret = VActivityManager.get().startActivity(t, 0);
+-                    if (ret < 0) {
+-                        Toast.makeText(getActivity(), R.string.xposed_installer_not_found, Toast.LENGTH_SHORT).show();
+-                    }
+-                } catch (Throwable ignored) {
+-                    ignored.printStackTrace();
+-                }
+-                return false;
+-            });
+-
+-            recommend.setOnPreferenceClickListener(preference -> {
+-                startActivity(new Intent(getActivity(), RecommendPluginActivity.class));
+-                return false;
+-            });
+-
+-            boolean xposedEnabled = VirtualCore.get().isXposedEnabled();
+-
+-            // Sync the disable xposed switch with the actual file state
+-            File disableXposedFile = getActivity().getFileStreamPath(".disable_xposed");
+-            disableXposed.setChecked(disableXposedFile.exists());
+-
+-            // On Android 14+, add a warning about Xposed compatibility
+-            if (Build.VERSION.SDK_INT >= 34) {
+-                disableXposed.setSummary("Xposed may be unstable on Android 14+. Enable at your own risk.");
+-            }
+-
+-            if (!xposedEnabled) {
+-                getPreferenceScreen().removePreference(moduleManage);
+-                getPreferenceScreen().removePreference(recommend);
+-            }
+-
+             appManage.setOnPreferenceClickListener(preference -> {
+                 startActivity(new Intent(getActivity(), AppManageActivity.class));
+                 return false;
+@@ -187,28 +151,6 @@
+                 return true;
+             });
+ 
+-            disableXposed.setOnPreferenceChangeListener((preference, newValue) -> {
+-
+-                if (!(newValue instanceof Boolean)) {
+-                    return false;
+-                }
+-
+-                boolean on = (boolean) newValue;
+-
+-                File xposedFlagFile = getActivity().getFileStreamPath(".disable_xposed");
+-                if (on) {
+-                    boolean success;
+-                    try {
+-                        success = xposedFlagFile.createNewFile();
+-                    } catch (IOException e) {
+-                        success = false;
+-                    }
+-                    return success;
+-                } else {
+-                    return !xposedFlagFile.exists() || xposedFlagFile.delete();
+-                }
+-            });
+-
+             disableResidentNotification.setOnPreferenceChangeListener(((preference, newValue) -> {
+ 
+                 if (!(newValue instanceof Boolean)) {
+--- a/app/src/main/java/io/virtualapp/XApp.java
++++ b/app/src/main/java/io/virtualapp/XApp.java
+@@ -43,23 +43,15 @@
+         } catch (Throwable e) {
+             e.printStackTrace();
+         }
+-        // On Android 14+ (API 34+), auto-disable Xposed on first launch since
+-        // Epic/SandHook may be incompatible. Users can re-enable from Settings.
+-        if (Build.VERSION.SDK_INT >= 34) {
+-            try {
+-                File disableXposedFile = base.getFileStreamPath(".disable_xposed");
+-                File xposedApiChecked = base.getFileStreamPath(".xposed_api34_checked");
+-                if (!xposedApiChecked.exists()) {
+-                    // First time on API 34+: disable Xposed by default
+-                    if (!disableXposedFile.exists()) {
+-                        disableXposedFile.createNewFile();
+-                        Log.i(TAG, "Auto-disabled Xposed on API " + Build.VERSION.SDK_INT + " (can re-enable from Settings)");
+-                    }
+-                    xposedApiChecked.createNewFile();
+-                }
+-            } catch (IOException e) {
+-                Log.w(TAG, "Failed to auto-configure Xposed settings", e);
++        // PHANToM VPhone does not use the embedded Xposed runtime.
++        try {
++            File disableXposedFile = base.getFileStreamPath(".disable_xposed");
++            if (!disableXposedFile.exists()) {
++                disableXposedFile.createNewFile();
+             }
++            Log.i(TAG, "Embedded Xposed runtime disabled for PHANToM VPhone");
++        } catch (IOException e) {
++            Log.w(TAG, "Failed to disable embedded Xposed runtime", e);
+         }
+     }
+ 
+--- a/app/src/main/res/xml/settings_preferences.xml
++++ b/app/src/main/res/xml/settings_preferences.xml
+@@ -7,17 +7,6 @@
+         android:summary="@string/settings_add_app_summary"
+         android:title="@string/add_app" />
+ 
+-    <Preference
+-        android:key="settings_module_manage"
+-        android:persistent="false"
+-        android:summary="@string/settings_module_manage_summary"
+-        android:title="@string/settings_module_manage" />
+-
+-    <Preference
+-        android:key="settings_plugin_recommend"
+-        android:persistent="false"
+-        android:title="@string/settings_plugin_recommend" />
+-
+     <PreferenceCategory
+         android:key="settings_advance"
+         android:title="@string/settings_advance">
+@@ -26,13 +15,6 @@
+             android:key="advance_settings_install_gms"
+             android:persistent="false"
+             android:title="@string/advance_settings_install_gms"/>
+-
+-        <SwitchPreference
+-            android:defaultValue="false"
+-            android:key="advance_settings_disable_xposed"
+-            android:persistent="true"
+-            android:summary="@string/advance_settings_disable_xposed_summary"
+-            android:title="@string/advance_settings_disable_xposed" />
+ 
+         <SwitchPreference
+             android:defaultValue="false"
+--- a/app/src/main/AndroidManifest.xml
++++ b/app/src/main/AndroidManifest.xml
+@@ -4,6 +4,23 @@
+     package="io.virtualapp">
+ 
+     <uses-permission android:name="android.permission.INTERNET" />
++
++    <!-- Modern permissions used by the guest permission broker. -->
++    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
++    <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
++    <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
++    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
++    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
++    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
++    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
++    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
++    <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
++    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
++    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
++    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
++    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
++    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
++    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
