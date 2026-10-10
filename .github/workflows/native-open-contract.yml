@@ -1,0 +1,17 @@
+name: Native open redirect contract
+on:
+  push:
+    paths:
+      - 'runtime_patch/native_open_redirect.patch'
+      - 'tests/test_native_open_redirect.py'
+      - '.github/workflows/native-open-contract.yml'
+  workflow_dispatch:
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m unittest discover -s tests -p test_native_open_redirect.py -v
