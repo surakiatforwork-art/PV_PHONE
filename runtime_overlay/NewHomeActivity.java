@@ -330,9 +330,9 @@ public class NewHomeActivity extends AppCompatActivity {
             intent.setPackage(pkg);
             if (getPackageManager().resolveActivity(intent,
                     android.content.pm.PackageManager.MATCH_DEFAULT_ONLY) == null) {
-                intent.setPackage(null);
-                Toast.makeText(this, "Selected camera cannot capture; using system default.",
+                Toast.makeText(this, "Selected provider does not support photo capture.",
                         Toast.LENGTH_LONG).show();
+                return;
             }
         }
         try {

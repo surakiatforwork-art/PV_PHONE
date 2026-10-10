@@ -21,13 +21,10 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 final class CameraProviderPicker {
 
@@ -51,40 +48,21 @@ final class CameraProviderPicker {
 
     static void show(Activity activity, String currentPackage, Callback callback) {
         PackageManager pm = activity.getPackageManager();
-        Set<String> capturePackages = new HashSet<>();
-        collectCaptureHandlers(pm, new Intent(MediaStore.ACTION_IMAGE_CAPTURE), capturePackages);
-        collectCaptureHandlers(pm, new Intent(MediaStore.ACTION_VIDEO_CAPTURE), capturePackages);
 
+        // Android can restrict implicit capture discovery to system cameras.
+        // Probe each installed package explicitly so third-party capture handlers
+        // are discovered using the same intent that routing will launch.
         Map<String, Entry> unique = new LinkedHashMap<>();
-        Intent launcherQuery = new Intent(Intent.ACTION_MAIN);
-        launcherQuery.addCategory(Intent.CATEGORY_LAUNCHER);
-        for (ResolveInfo info : pm.queryIntentActivities(launcherQuery, 0)) {
-            if (info.activityInfo == null || info.activityInfo.packageName == null) continue;
-            String pkg = info.activityInfo.packageName;
-            if (pkg.equals(activity.getPackageName()) || unique.containsKey(pkg)
-                    || !capturePackages.contains(pkg)) continue;
-            CharSequence label = info.loadLabel(pm);
-            Drawable icon;
-            try { icon = info.loadIcon(pm); }
-            catch (Throwable ignored) { icon = pm.getDefaultActivityIcon(); }
-            unique.put(pkg, new Entry(
-                    label == null ? pkg : label.toString(),
-                    pkg,
-                    icon,
-                    capturePackages.contains(pkg)));
-        }
-
-        // Include capture handlers even if they do not expose a launcher.
-        for (String pkg : capturePackages) {
-            if (pkg.equals(activity.getPackageName()) || unique.containsKey(pkg)) continue;
+        for (android.content.pm.ApplicationInfo ai : pm.getInstalledApplications(0)) {
+            String pkg = ai.packageName;
+            if (pkg.equals(activity.getPackageName()) || !ai.enabled) continue;
+            boolean photo = supportsCapture(pm, pkg, MediaStore.ACTION_IMAGE_CAPTURE);
+            boolean video = supportsCapture(pm, pkg, MediaStore.ACTION_VIDEO_CAPTURE);
+            if (!photo && !video) continue;
             try {
-                android.content.pm.ApplicationInfo ai = pm.getApplicationInfo(pkg, 0);
                 CharSequence label = pm.getApplicationLabel(ai);
-                unique.put(pkg, new Entry(
-                        label == null ? pkg : label.toString(),
-                        pkg,
-                        pm.getApplicationIcon(ai),
-                        true));
+                unique.put(pkg, new Entry(label == null ? pkg : label.toString(),
+                        pkg, pm.getApplicationIcon(ai), true));
             } catch (Throwable ignored) {
             }
         }
@@ -197,13 +175,11 @@ final class CameraProviderPicker {
         dialog.show();
     }
 
-    private static void collectCaptureHandlers(
-            PackageManager pm, Intent intent, Set<String> out) {
-        for (ResolveInfo info : pm.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)) {
-            if (info.activityInfo != null && info.activityInfo.packageName != null) {
-                out.add(info.activityInfo.packageName);
-            }
-        }
+    private static boolean supportsCapture(PackageManager pm, String pkg, String action) {
+        Intent probe = new Intent(action).setPackage(pkg);
+        ResolveInfo info = pm.resolveActivity(probe, PackageManager.MATCH_DEFAULT_ONLY);
+        return info != null && info.activityInfo != null
+                && info.activityInfo.enabled && info.activityInfo.exported;
     }
 
     private static int dp(Activity activity, int value) {

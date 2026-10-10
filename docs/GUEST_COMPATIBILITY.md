@@ -20,3 +20,10 @@ and
 `python tests/android/build_probe.py OUTPUT_DIR_OTHER com.phantom.releaseprobeother`.
 
 Install both as guests. Test channels in both, delete one while checking the other's channel, locale roundtrip, two-way provider queries, signer comparison, and direct/pending activity transitions. Clean channels before removing both probes. Preserve existing user guest data.
+
+
+### Camera provider discovery correction (0.4.7)
+
+Android 11+ restricts implicit capture intent discovery to preinstalled system cameras. PHANToM now probes installed packages explicitly for photo/video capture support, matching the package-specific routing intent. This makes third-party handlers such as Timestamp Camera and LINE Camera discoverable. A provider that cannot capture a photo no longer silently opens the system camera from Test Camera. Device result validation is pending.
+
+Reference: https://developer.android.com/about/versions/11/behavior-changes-11#media-capture
