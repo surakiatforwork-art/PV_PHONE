@@ -3,7 +3,7 @@
 Runtime: ISEKHON/VirtualApp, pinned to b3c634ad7941765df3da84a207aca94b7861afae.
 Source: https://github.com/ISEKHON/VirtualApp/tree/b3c634ad7941765df3da84a207aca94b7861afae
 
-Release 0.4.5 is built from the pinned source plus runtime_patch and runtime_overlay.
+Release 0.4.6 is built from the pinned source plus runtime_patch and runtime_overlay.
 The release workflow uses JDK 17, NDK 21.4.7075529, the upstream Gradle wrapper,
 and the existing PHANTOM_ALPHA signing secrets. It produces signed release variants.
 The root `app` module remains a separate legacy scaffold.

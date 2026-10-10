@@ -1,25 +1,26 @@
-# Compatibility for 0.4.5
+# Compatibility for 0.4.6
 
-Device: Infinix X6856, Android 16 / API 36, arm64. Validation date: 10 October 2026.
+Device: Infinix X6856, Android 16 / API 36, arm64. Date: 10 October 2026.
 
 | Scenario | Result |
 |---|---|
-| Signed update from 0.4.3-alpha | Passed; guest data retained |
-| Launch disposable guest APK | Passed |
-| Default CAMERA via package/self checks | Passed, both granted |
-| Virtual Deny CAMERA with host still granted | Passed, both denied |
-| Reset policy to Default | Passed, both grants restored |
-| Transsion camera thumbnail result | Passed, RESULT_OK + bitmap |
-| Transsion camera guest-owned EXTRA_OUTPUT content URI | Passed, RESULT_OK + nonempty JPEG |
-| Camera cancellation callback | Passed, RESULT_CANCELED |
-| Universal APK on this arm64 device | Passed install, permission and output-capture smoke tests |
-| Policy save failure preserves Deny | Passed JVM harness with Android shims |
-| Virtual user isolation | Passed JVM harness; physical multi-user untested |
-| DuckDuckGo | Unsupported: notification-channel package check fails |
-| Chrome | Experimental: onboarding partially works; isolated navigation not certified |
-| Google Play / GMS sign-in | Experimental, not certified |
-| com.meitu.meiyancamera provider | Failed in external camera during image completion |
-| Camera2 / CameraX / getUserMedia redirection | Not implemented; intent routing only |
-| Other devices, Android versions, x86_64, armeabi-v7a | Untested |
+| Signed update retaining guests | Passed |
+| Channel/group create, read, list, delete, recreate | Passed with two guests |
+| Identical channel IDs across packages | Isolated; deletion in one left the other intact |
+| Notification posting | Passed; host channel has guest/user namespace |
+| Two-way provider caller identity | Passed |
+| Application locale set/get/restore | Passed; restart/recreation may be needed |
+| Direct and PendingIntent activity transitions | Passed; guest UID and host stub retained |
+| Legacy and SigningInfo certificate APIs | Passed; SHA-256 matched apksigner |
+| Virtual staged-session query | Passed; empty, no staged backend |
+| Transsion camera guest EXTRA_OUTPUT | Passed; RESULT_OK, 3,309,262 bytes during arm64 validation |
+| Final universal APK on arm64 | Signer/provider/PendingIntent passed; fresh camera output 3,316,722 bytes |
+| DuckDuckGo | Onboarding and HTTPS page passed; full features/background not certified |
+| Chrome | Unsupported for normal use: native GPU process failure |
+| Google Play / GMS | Unsupported for normal use: device-policy authorization; login not certified |
+| Policy rollback and virtual user isolation | JVM harness passed; physical user-1 untested |
+| Camera2 / CameraX / getUserMedia redirection | Not implemented |
+| Other Android versions, devices and additional ABIs | Untested |
 
-See ../RELEASE_NOTES.md for measured results, build provenance and known limits.
+0.4.5 previously passed thumbnail/cancellation, virtual CAMERA Deny/reset, and universal-on-arm64 camera checks.
+See ../RELEASE_NOTES.md for current build provenance and limitations.

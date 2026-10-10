@@ -109,6 +109,8 @@ public class MainActivity extends Activity {
   try {
    Intent i=new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
    if(output) {
+    File previous=new File(getFilesDir(),"capture.jpg");
+    if(previous.exists()&&!previous.delete())throw new java.io.IOException("Cannot remove prior probe capture");
     Uri uri=Uri.parse("content://"+getPackageName()+".capture/photo");
     i.putExtra(MediaStore.EXTRA_OUTPUT,uri);
     i.setClipData(ClipData.newRawUri("capture",uri));

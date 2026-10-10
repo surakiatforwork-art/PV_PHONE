@@ -1,6 +1,6 @@
 # Third-party runtime
 
-PHANToM VPhone 0.4.5 includes a modified ISEKHON/VirtualApp runtime.
+PHANToM VPhone 0.4.6 includes a modified ISEKHON/VirtualApp runtime.
 Upstream source and retained copyright notices are available at:
 https://github.com/ISEKHON/VirtualApp/tree/b3c634ad7941765df3da84a207aca94b7861afae
 

@@ -1,44 +1,50 @@
-# PHANToM VPhone v0.4.5
+# PHANToM VPhone v0.4.6
 
-Signed maintenance release for the guest permission and camera-intent workflows.
-Validated on Infinix X6856, Android 16 (API 36), on 10 October 2026.
-**Browser/GMS compatibility remains experimental; this is not an all-app compatibility guarantee.**
+Signed maintenance release improving guest notification and identity handling.
+Tested on Infinix X6856, Android 16 / API 36, arm64, on 10 October 2026.
+**This is not an all-app compatibility guarantee. Chrome and Google Play remain unsupported for normal use on this tested device.**
 
 ## Changes
-- Preserve virtual Deny policies with atomic file replacement and report failed writes.
-- Inspect the launching virtual user's manifest instead of always inspecting user 0.
-- Request foreground location first; background access uses a separate Android Settings step.
-- Respect virtual Deny during dangerous-permission requests.
-- Hook modern PermissionManager and device-aware self-permission checks.
-- List capture-capable camera providers; unsupported actions use Android's capture handler.
-- Bridge a guest-owned content URI through a private, grantable host provider so EXTRA_OUTPUT can receive the full-resolution image.
-- Route modern feature broadcasts through VirtualApp and reject unresolved explicit guest activity targets instead of opening their normal host installation.
-- Require android.permission.DUMP for the ADB control receiver.
-- Fetch VirtualApp at pinned commit b3c634ad7941765df3da84a207aca94b7861afae.
-- Build non-debuggable release APKs with the existing signing certificate (versionCode 64).
+- Translate calling and target packages for modern notification-channel queries.
+- Namespace channel/group IDs by guest package and virtual user; translate create/read/delete and normal/foreground-service posting without mutating guest objects.
+- Store application locales in guest storage; a guest restart or activity recreation may be needed to apply a language change.
+- Translate virtual provider callers to guest package/base UID and external callers to real host identity. Copy the attribution root without overwriting downstream identities.
+- Route feature-aware PendingIntent activities using the correct intent-array index.
+- Read actual APK signing certificates and SigningInfo through Android's archive parser; repair older cached metadata from the registered guest APK. Remove placeholder/signature-spoof fallbacks.
+- Return an empty staged-session list: the virtual installer has no reboot-staged/APEX backend.
+- Keep the existing signing certificate and non-debuggable release build; versionCode 65.
 
 ## Device validation
-- Updating the existing 0.4.3-alpha installation succeeded without uninstalling it or clearing guest data.
-- arm64: CAMERA package/self checks both granted with Default; both denied with virtual Deny while host CAMERA stayed granted; resetting restored both grants.
-- arm64: Transsion camera returned RESULT_OK with a bitmap thumbnail; full-resolution EXTRA_OUTPUT returned RESULT_OK with 3,280,717 bytes; cancellation returned RESULT_CANCELED.
-- universal: installed successfully on the same arm64 device; package/self permission checks granted and full-resolution capture returned RESULT_OK with 3,285,227 bytes.
-- Permission policy rollback, invalid mode rejection and virtual user isolation passed the JVM regression harness. Physical multi-user testing and other ABIs were not performed.
-- Both APK signatures verified and have the same certificate. All four CI workflows passed for build source efcf423b26e93d6d86df3c50f6a4b4a9f532d2a8.
+- Signed updates retained the existing guest packages and data.
+- Two disposable guests used identical channel/group IDs: create, individual/list reads, delete, recreate and posting passed independently. Deleting one guest's group left the other's channel undeleted.
+- Provider queries passed both ways with virtual UIDs 10015 / 10017 and correct caller packages.
+- Guest locale set/get/restore passed with fr-FR and initially empty application locales.
+- Direct and PendingIntent transitions retained the guest UID and resumed inside PHANToM's stub activity.
+- SigningInfo SHA-256 matched the probe APK certificate checked with apksigner; staged-session query passed.
+- Transsion camera returned RESULT_OK for a guest-owned EXTRA_OUTPUT URI with 3,309,262 bytes during arm64 validation.
+- Final universal APK on the arm64 device passed signer/provider/PendingIntent checks and produced a new 3,316,722-byte output image after the probe deleted its previous test image.
+- Both final APK signatures verified against the existing certificate; all four CI workflows passed for the build source below.
+- DuckDuckGo passed onboarding and displayed an HTTPS page while the resumed activity stayed inside PHANToM.
+- Permission-policy JVM tests passed rollback, virtual user isolation, invalid-mode and allow/deny/default checks.
 
 ## Known limitations
-- DuckDuckGo still fails an upstream notification-channel package check on this Android 16 device. It is not a supported app for this release.
-- Chrome's onboarding can open, but isolated browser navigation is not certified. Google Play/GMS sign-in is not certified and remains experimental.
-- The installed third-party provider com.meitu.meiyancamera crashed during image completion. Use the tested Transsion camera on this device.
-- Intent routing does not redirect embedded Camera2/CameraX/getUserMedia camera sessions.
-- Guests share the host Linux UID. Virtual Deny controls hooked permission queries; it is not a separate Linux security boundary.
+- Chrome passes the former locale permission failure but aborts with "GPU process isn't usable". A normal installed Chrome screen is not guest success.
+- Google Play fails device-policy authorization. GMS login, purchases, downloads and certification are not validated. Correct certificates do not provide system privileges or attestation.
+- DuckDuckGo validation covers launch/basic browsing, not all features or background reliability; JobScheduler warnings were observed.
+- Dynamic LocaleConfig APIs, privileged notification administration, and old unnamespaced channel migration are not implemented.
+- Notification IDs exceeding Android's 1000-character limit after namespacing fail explicitly instead of colliding.
+- Camera2/CameraX/getUserMedia are not redirected by capture-intent routing. Use the tested com.transsion.camera provider.
+- Guests share the host Linux UID; virtual package/permission policies do not provide a separate Linux boundary.
+- Physical virtual-user-1, other devices/Android versions and additional ABIs remain untested.
 
-## Downloads
-Use the arm64 APK for this Infinix device. The universal APK includes additional ABIs, which have not been tested here.
-Install as an update; do not uninstall first if guest data should be retained.
-SHA256SUMS.txt accompanies the assets. The signing certificate SHA-256 is:
-`4b0b9d2a4a1f290129e4e5e83c334e4066613782a62756ce8f0ea85f0c274b01`.
+## Downloads and provenance
+Use arm64 on the tested Infinix. Install as an update without uninstalling PHANToM to retain guest data.
+Universal includes additional untested ABIs. SHA256SUMS.txt accompanies release assets.
+Signing certificate SHA-256: `4b0b9d2a4a1f290129e4e5e83c334e4066613782a62756ce8f0ea85f0c274b01`.
 
-Build evidence: https://github.com/surakiatforwork-art/PV_PHONE/actions/runs/38031444441
+Build source: `14fca40bac152ae7945873e2d53badcae7e28a6b`.
+Build evidence: https://github.com/surakiatforwork-art/PV_PHONE/actions/runs/38035133187
+Upstream VirtualApp: `b3c634ad7941765df3da84a207aca94b7861afae`, with repository patches/overlays.
 
 ## Earlier releases
-The initial v0.1.0-alpha root module was a camera/import test harness. Current runtime releases are produced by the patched VirtualApp CI workflow, not that root app module.
+v0.4.5 added permission/capture fixes. The root app module remains an import/camera harness; released APKs come from the patched VirtualApp workflow.
