@@ -28,3 +28,8 @@ CI build success cannot activate a subsystem. The development build now adds a
 [read-only Android Settings surface](docs/ANDROID_DIAGNOSTICS_INTEGRATION.md).
 Guest probes, per-guest enforcement migration and clone-slot actions remain subsequent work.
 No release is produced automatically for these architecture/tooling changes.
+
+The current 0.4.9-dev build also fixes native opening of guest external-cache
+capture outputs. DuckDuckGo file-input photo capture now returns a preview on the
+tested Android 16 device with Timestamp Camera and the system camera. See the
+[capture fix and validation scope](docs/CAMERA_WEB_CAPTURE_FIX.md).

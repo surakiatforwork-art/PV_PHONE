@@ -24,3 +24,12 @@ values. The original engine and compatibility patches remain in place. This
 integration does not yet consume the Python reducer or collect guest evidence.
 See [Android integration](ANDROID_DIAGNOSTICS_INTEGRATION.md) for boundaries.
 The stable published release remains v0.4.8; no new release is created.
+
+## Guest browser capture regression fix
+
+Development code 71 adds native open/openat path redirection within the existing
+engine, fixing camera output writes into guest external cache. DuckDuckGo guest
+now receives JPEGs on the user's test page with Timestamp Camera and the system
+camera on the tested Android 16 arm64 device. See
+[capture validation](CAMERA_WEB_CAPTURE_FIX.md). These physical trials do not
+automatically change the diagnostics screen's UNKNOWN capability entries.
