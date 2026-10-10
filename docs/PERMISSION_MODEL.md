@@ -1,5 +1,3 @@
-[Reading 65 lines from start (total: 65 lines, 0 remaining)]
-
 # PHANToM VPhone Permission Model
 
 ## Host / guest model
@@ -45,16 +43,39 @@ Once the user grants All files access to PHANToM VPhone, guest processes execute
 under the same host UID and can use that host-level storage capability, subject to
 VirtualApp IO redirection and Android/SELinux restrictions.
 
-READ_EXTERNAL_STORAGE / WRITE_EXTERNAL_STORAGE alone are not equivalent to All files
-access on modern Android.
+Legacy READ_EXTERNAL_STORAGE / WRITE_EXTERNAL_STORAGE requests are also bridged to
+All files access on Android 11+ for compatibility with older file-manager apps.
+
+## Per-guest permission settings
+
+Each installed Guest has a Permissions page under:
+
+Settings -> App Manage -> Guest menu -> Permissions
+
+Every permission requested by that Guest can be set to:
+
+- Default: inherit the real PHANToM host permission state.
+- Allow: request/use the PHANToM host permission when Android permits it.
+- Deny: force PERMISSION_DENIED for that Guest inside the Virtual Package Manager,
+  even when the PHANToM host has the permission.
+
+Policies are persisted per package and virtual user in the PHANToM private sandbox.
+The policy store is file-backed so virtual processes and the package-manager service
+see updates across processes.
+
+Because all Guests still execute under the PHANToM host UID, this virtual Deny layer
+is API-level policy rather than a separate Linux UID sandbox. Direct kernel-level
+access available to the host cannot be made fully independent per Guest without a
+stronger isolation architecture.
 
 ## Limitations
 
 PHANToM cannot grant signature, privileged, role-restricted or hardware-backed
 permissions that Android does not allow a normal rootless application to receive.
-Some permissions (SMS/call-log roles, device admin, accessibility, VPN, notification
-listener, etc.) have separate Android role/service approval flows and may require
-future adapters.
+
+Some capabilities such as SMS/call-log roles, device admin, accessibility, VPN and
+notification listener use separate Android role/service approval flows and may
+require dedicated adapters.
 
 Permissions granted to PHANToM VPhone exist at the host UID level. They do not grant
 anything to unrelated applications installed normally on the device.
@@ -65,19 +86,3 @@ The embedded VirtualApp Xposed runtime is disabled in PHANToM VPhone and the Xpo
 controls are removed from Settings. This only affects the embedded runtime inside
 PHANToM VPhone. It does not enable, disable, patch or modify Xposed/LSPosed/Magisk or
 any normal application installed outside PHANToM VPhone.
-
-[executed on device: PHANToM (60ef0451-feba-4882-8849-367db28e542d)]
-## Per-guest permission settings
-
-Each installed Guest has a Permissions page under Settings > App Manage > Guest menu > Permissions.
-Every permission requested by that Guest can be set to:
-
-- Default: inherit the real PHANToM host permission state.
-- Allow: request/use the PHANToM host permission when Android permits it.
-- Deny: force PERMISSION_DENIED for that Guest inside the Virtual Package Manager even when the host has the permission.
-
-Policies are persisted per package and virtual user in the PHANToM private sandbox. The policy store is file-backed so virtual processes and the package-manager service see updates across processes.
-
-On Android 11+, legacy READ_EXTERNAL_STORAGE / WRITE_EXTERNAL_STORAGE requests are bridged to PHANToM's All files access when granted, improving compatibility with older file-manager apps.
-
-Because all Guests still execute under the PHANToM host UID, this virtual Deny layer is API-level policy rather than a separate Linux UID sandbox. Direct kernel-level access available to the host cannot be made fully independent per Guest without a stronger isolation architecture.
