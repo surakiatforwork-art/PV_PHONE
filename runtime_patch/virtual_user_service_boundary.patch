@@ -1,0 +1,35 @@
+--- a/lib/src/main/java/com/lody/virtual/client/hook/proxies/am/MethodProxies.java
++++ b/lib/src/main/java/com/lody/virtual/client/hook/proxies/am/MethodProxies.java
+@@ -1193,6 +1193,15 @@
+ 
+ 
++    static class GetCurrentUserId extends MethodProxy {
++        @Override public String getMethodName() { return "getCurrentUserId"; }
++        @Override public boolean isEnable() { return isAppProcess(); }
++        @Override public Object call(Object who, Method method, Object... args) {
++            // Virtual users are runtime slots, not privileged Android users.
++            return VUserHandle.myUserId();
++        }
++    }
++
+     static class GetCurrentUser extends MethodProxy {
+ 
+         @Override
+         public String getMethodName() {
+@@ -1764,5 +1773,16 @@
+                 args[intentIndex + 6] = null;
+             }
++            if (newIntent.hasExtra("_VA_|_user_id_")) {
++                // Virtual routing already preserves its slot in the intent.
++                // Deliver the outer broadcast only within the host Android user.
++                Class<?>[] parameters = method.getParameterTypes();
++                for (int i = parameters.length - 1; i >= 0; i--) {
++                    if (parameters[i] == int.class) {
++                        args[i] = VirtualCore.get().myUid() / 100000;
++                        break;
++                    }
++                }
++            }
+             return method.invoke(who, args);
+         }
+ 
