@@ -1,0 +1,7 @@
+--- a/app/src/main/AndroidManifest.xml
++++ b/app/src/main/AndroidManifest.xml
+@@ -1,1 +1,4 @@
+         <activity android:name=".home.NewHomeActivity" />
++        <activity
++            android:name=".settings.EngineDiagnosticsActivity"
++            android:exported="false" />

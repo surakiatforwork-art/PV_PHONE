@@ -24,6 +24,7 @@ Start with [reference gap analysis](docs/REFERENCE_ARCHITECTURE_GAP_ANALYSIS.md)
 [implementation status](docs/IMPLEMENTATION_STATUS.md), and
 [offline diagnostic tooling](diagnostics/README.md).
 The models require scoped runtime evidence for ACTIVE and compatibility PASS;
-CI build success cannot activate a subsystem. Android Settings integration,
-per-guest enforcement migration and clone-slot actions are subsequent work.
+CI build success cannot activate a subsystem. The development build now adds a
+[read-only Android Settings surface](docs/ANDROID_DIAGNOSTICS_INTEGRATION.md).
+Guest probes, per-guest enforcement migration and clone-slot actions remain subsequent work.
 No release is produced automatically for these architecture/tooling changes.

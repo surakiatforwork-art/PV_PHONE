@@ -3,12 +3,18 @@ on:
   push:
     paths:
       - 'diagnostics/**'
-      - 'tests/test_diagnostics_model.py'
+      - 'tests/test_*diagnostics*.py'
+      - 'runtime_overlay/EngineDiagnosticsActivity.java'
+      - 'runtime_patch/engine_diagnostics.patch'
+      - '.github/workflows/phantom-vphone-rc.yml'
       - '.github/workflows/diagnostics-contracts.yml'
   pull_request:
     paths:
       - 'diagnostics/**'
-      - 'tests/test_diagnostics_model.py'
+      - 'tests/test_*diagnostics*.py'
+      - 'runtime_overlay/EngineDiagnosticsActivity.java'
+      - 'runtime_patch/engine_diagnostics.patch'
+      - '.github/workflows/phantom-vphone-rc.yml'
       - '.github/workflows/diagnostics-contracts.yml'
   workflow_dispatch:
 jobs:
@@ -19,7 +25,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: python -m unittest discover -s tests -p test_diagnostics_model.py -v
+      - run: python -m unittest discover -s tests -p 'test_*diagnostics*.py' -v
       - run: python -m compileall -q diagnostics
       - run: python -m diagnostics.report diagnostics/examples/unmeasured.json --html diagnostics-report.html
       - uses: actions/upload-artifact@v4

@@ -78,6 +78,17 @@ public class SettingsActivity extends AppCompatActivity {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.settings_preferences);
 
+            Preference diagnostics = new Preference(getActivity());
+            diagnostics.setKey("settings_engine_diagnostics");
+            diagnostics.setTitle("Engine Diagnostics");
+            diagnostics.setSummary("Host observations and guest runtime evidence status (read-only)");
+            diagnostics.setOrder(-1);
+            diagnostics.setOnPreferenceClickListener(preference -> {
+                startActivity(new Intent(getActivity(), EngineDiagnosticsActivity.class));
+                return true;
+            });
+            getPreferenceScreen().addPreference(diagnostics);
+
             // Setup allow rotation preference
 
             Preference addApp = findPreference(ADD_APP_KEY);
