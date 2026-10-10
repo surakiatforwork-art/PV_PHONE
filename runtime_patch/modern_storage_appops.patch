@@ -28,7 +28,7 @@
 +            service.set(null, proxy);
 +        } catch (NoSuchFieldException ignored) {
 +        }
-+        Object manager = getHostContext().getSystemService(Context.APP_OPS_SERVICE);
++        Object manager = com.lody.virtual.client.core.VirtualCore.get().getContext().getSystemService(Context.APP_OPS_SERVICE);
 +        if (manager != null) {
 +            java.lang.reflect.Field service = android.app.AppOpsManager.class.getDeclaredField("mService");
 +            service.setAccessible(true);
