@@ -41,6 +41,7 @@ jobs:
           cp runtime_overlay/CameraProviderPicker.java             runtime/app/src/main/java/io/virtualapp/home/CameraProviderPicker.java
           cp runtime_overlay/GuestPermissionBroker.java             runtime/app/src/main/java/io/virtualapp/home/GuestPermissionBroker.java
           cp runtime_overlay/GuestPermissionSettingsActivity.java             runtime/app/src/main/java/io/virtualapp/settings/GuestPermissionSettingsActivity.java
+          cp runtime_overlay/app_manage_menu.xml             runtime/app/src/main/res/menu/app_manage_menu.xml
           cp runtime_overlay/GuestPermissionPolicy.java             runtime/lib/src/main/java/com/lody/virtual/helper/utils/GuestPermissionPolicy.java
           cd runtime
           patch -p1 < ../runtime_patch/android16_transaction_handler.patch
