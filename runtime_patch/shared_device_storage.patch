@@ -1,0 +1,35 @@
+--- a/lib/src/main/java/com/lody/virtual/client/VClientImpl.java
++++ b/lib/src/main/java/com/lody/virtual/client/VClientImpl.java
+@@ -604,12 +604,6 @@
+     private void setupVirtualStorage(ApplicationInfo info, int userId) {
+         VirtualStorageManager vsManager = VirtualStorageManager.get();
+         boolean enable = vsManager.isVirtualStorageEnable(info.packageName, userId);
+-        // Android 11, force enable storage redirect.
+-        if (!enable && !(Build.VERSION.SDK_INT >= 30)) {
+-            // There are lots of situation to deal, I am tired, disable it now.
+-            // such as: FileProvider.
+-            return;
+-        }
+ 
+         File vsDir = VEnvironment.getVirtualStorageDir(info.packageName, userId);
+         if (vsDir == null || !vsDir.exists() || !vsDir.isDirectory()) {
+@@ -621,6 +615,19 @@
+ 
+         HashSet<String> storageRoots = getMountPoints();
+         storageRoots.add(Environment.getExternalStorageDirectory().getAbsolutePath());
++
++        if (!enable) {
++            // Shared device files should remain visible when storage redirect is off.
++            // Guest app-private external data must still resolve to virtual storage.
++            String privatePath = VEnvironment.getVirtualPrivateStorageDir(userId).getAbsolutePath();
++            NativeEngine.whitelist(privatePath, true);
++            for (String storageRoot : storageRoots) {
++                NativeEngine.redirectDirectory(new File(storageRoot, "Android/data/").getAbsolutePath(), privatePath);
++                NativeEngine.redirectDirectory(new File(storageRoot, "Android/obb/").getAbsolutePath(), privatePath);
++            }
++            VLog.i(TAG, "Shared device storage enabled for " + info.packageName);
++            return;
++        }
+ 
+         Set<String> whiteList = new HashSet<>();
+         whiteList.add(Environment.DIRECTORY_PODCASTS);

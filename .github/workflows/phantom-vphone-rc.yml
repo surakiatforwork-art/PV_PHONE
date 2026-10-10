@@ -46,6 +46,7 @@ jobs:
           cd runtime
           patch -p1 < ../runtime_patch/android16_transaction_handler.patch
           patch -p1 < ../runtime_patch/camera_provider.patch
+          patch -p1 < ../runtime_patch/shared_device_storage.patch
           patch -p1 < ../runtime_patch/permission_broker_xposed.patch
           patch -p1 < ../runtime_patch/guest_permission_settings.patch
           patch -p1 < ../runtime_patch/cmd_receiver_security.patch
@@ -97,8 +98,8 @@ jobs:
         working-directory: runtime
         run: |
           sed -i 's/applicationId "io.va.exposed64"/applicationId "com.phantom.vphone"/' app/build.gradle
-          sed -i 's/versionCode 1/versionCode 66/' app/build.gradle
-          sed -i 's/versionName "1.0.0"/versionName "0.4.7"/' app/build.gradle
+          sed -i 's/versionCode 1/versionCode 67/' app/build.gradle
+          sed -i 's/versionName "1.0.0"/versionName "0.4.8"/' app/build.gradle
           sed -i 's#<string name="app_name">VirtualApp</string>#<string name="app_name">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
           sed -i 's#<string name="vxp">VirtualApp</string>#<string name="vxp">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
           sed -i 's/VirtualApp-${variant.versionName}-${abi}.apk/PHANToM-VPhone-${variant.versionName}-${abi}.apk/' app/build.gradle
@@ -152,13 +153,13 @@ jobs:
       - name: Upload arm64 APK
         uses: actions/upload-artifact@v4
         with:
-          name: PHANToM-VPhone-v0.4.7-arm64
+          name: PHANToM-VPhone-v0.4.8-arm64
           path: runtime/app/build/outputs/apk/release/*-arm64-v8a.apk
           retention-days: 14
 
       - name: Upload universal APK
         uses: actions/upload-artifact@v4
         with:
-          name: PHANToM-VPhone-v0.4.7-universal
+          name: PHANToM-VPhone-v0.4.8-universal
           path: runtime/app/build/outputs/apk/release/*-universal.apk
           retention-days: 14
