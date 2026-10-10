@@ -27,10 +27,10 @@ with tempfile.TemporaryDirectory() as directory:
     dex.mkdir()
     sources = temp / "sources"
     sources.mkdir()
-    for name in ("MainActivity.java", "CaptureProvider.java", "AndroidManifest.xml"):
+    for name in ("MainActivity.java", "CaptureProvider.java", "TransitionActivity.java", "AndroidManifest.xml"):
         (sources / name).write_text((root / name).read_text().replace("com.phantom.releaseprobe", package))
     run("javac", "-source", "8", "-target", "8", "-classpath", jar,
-        "-d", classes, sources / "MainActivity.java", sources / "CaptureProvider.java")
+        "-d", classes, *sources.glob("*.java"))
     run("java", "-cp", tools / "lib/d8.jar", "com.android.tools.r8.D8",
         "--lib", jar, "--min-api", "21", "--output", dex,
         *classes.rglob("*.class"))

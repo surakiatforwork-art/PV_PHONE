@@ -26,8 +26,21 @@ public class MainActivity extends Activity {
   locales.setOnClickListener(v->testLocales());
   Button provider=new Button(this);provider.setText("Test guest provider");root.addView(provider);
   provider.setOnClickListener(v->testProvider());
+  Button cleanup=new Button(this);cleanup.setText("Delete probe notifications");root.addView(cleanup);
+  cleanup.setOnClickListener(v->{try{NotificationManager manager=getSystemService(NotificationManager.class);manager.cancel(9001);manager.deleteNotificationChannelGroup("shared-group");if(manager.getNotificationChannel("shared-channel")!=null)throw new AssertionError("Group delete failed");status.setText("CLEANUP PASS");}catch(Throwable e){status.setText("CLEANUP FAIL: "+e);}});
+  Button direct=new Button(this);direct.setText("Test direct activity");root.addView(direct);
+  direct.setOnClickListener(v->transition(false));
+  Button pending=new Button(this);pending.setText("Test pending activity");root.addView(pending);
+  pending.setOnClickListener(v->transition(true));
   status.setText("CAMERA="+getPackageManager().checkPermission("android.permission.CAMERA",getPackageName())+" SELF="+checkSelfPermission("android.permission.CAMERA")+" UID="+android.os.Process.myUid());
   setContentView(root);
+ }
+ void transition(boolean pending) {
+  try {
+   Intent intent=new Intent(this,TransitionActivity.class).putExtra("expectedUid",android.os.Process.myUid());
+   if(pending)android.app.PendingIntent.getActivity(this,1,intent,android.app.PendingIntent.FLAG_UPDATE_CURRENT|android.app.PendingIntent.FLAG_IMMUTABLE).send();
+   else startActivity(intent);
+  }catch(Throwable e){status.setText("ACTIVITY FAIL: "+e);android.util.Log.e("PHANToM.Probe","transition",e);}
  }
  void testLocales() {
   try {
@@ -55,6 +68,8 @@ public class MainActivity extends Activity {
  void testChannels() {
   try {
    NotificationManager manager=getSystemService(NotificationManager.class);
+   NotificationChannel existing=manager.getNotificationChannel("shared-channel");
+   if(existing!=null&&!getPackageName().contentEquals(existing.getName()))throw new AssertionError("Other guest overwrote channel");
    NotificationChannelGroup group=new NotificationChannelGroup("shared-group","Probe group");
    manager.createNotificationChannelGroup(group);
    NotificationChannel channel=new NotificationChannel("shared-channel",getPackageName(),NotificationManager.IMPORTANCE_DEFAULT);
