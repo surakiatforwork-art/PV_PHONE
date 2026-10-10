@@ -6,6 +6,11 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.widget.*;
 import java.io.File;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationChannelGroup;
+import android.app.NotificationManager;
+import java.util.List;
 public class MainActivity extends Activity {
  TextView status;
  protected void onCreate(Bundle saved) {
@@ -15,8 +20,35 @@ public class MainActivity extends Activity {
   Button thumb=new Button(this);thumb.setText("Capture thumbnail");root.addView(thumb);
   Button output=new Button(this);output.setText("Capture output URI");root.addView(output);
   thumb.setOnClickListener(v->capture(false));output.setOnClickListener(v->capture(true));
+  Button channels=new Button(this);channels.setText("Test notification channels");root.addView(channels);
+  channels.setOnClickListener(v->testChannels());
   status.setText("CAMERA="+getPackageManager().checkPermission("android.permission.CAMERA",getPackageName())+" SELF="+checkSelfPermission("android.permission.CAMERA")+" UID="+android.os.Process.myUid());
   setContentView(root);
+ }
+ void testChannels() {
+  try {
+   NotificationManager manager=getSystemService(NotificationManager.class);
+   NotificationChannelGroup group=new NotificationChannelGroup("shared-group","Probe group");
+   manager.createNotificationChannelGroup(group);
+   NotificationChannel channel=new NotificationChannel("shared-channel",getPackageName(),NotificationManager.IMPORTANCE_DEFAULT);
+   channel.setGroup("shared-group");channel.setDescription("roundtrip description");
+   manager.createNotificationChannel(channel);
+   if(!"shared-channel".equals(channel.getId())||!"shared-group".equals(group.getId()))throw new AssertionError("Input mutated");
+   NotificationChannel read=manager.getNotificationChannel("shared-channel");
+   if(read==null||!getPackageName().contentEquals(read.getName())||!"shared-channel".equals(read.getId())||!"shared-group".equals(read.getGroup())||!"roundtrip description".equals(read.getDescription()))throw new AssertionError("Channel roundtrip failed");
+   List<NotificationChannel> all=manager.getNotificationChannels();
+   boolean found=false;
+   for(NotificationChannel item:all){if(item.getId().startsWith("phantom:"))throw new AssertionError("Host ID leaked");if("shared-channel".equals(item.getId()))found=true;}
+   if(!found)throw new AssertionError("Channel missing from list");
+   NotificationChannelGroup readGroup=manager.getNotificationChannelGroup("shared-group");
+   if(readGroup==null||!"shared-group".equals(readGroup.getId()))throw new AssertionError("Group roundtrip failed");
+   if(manager.getNotificationChannelGroups().isEmpty())throw new AssertionError("Group list empty");
+   manager.deleteNotificationChannel("shared-channel");
+   if(manager.getNotificationChannel("shared-channel")!=null)throw new AssertionError("Channel delete failed");
+   manager.createNotificationChannel(channel);
+   manager.notify(9001,new Notification.Builder(this,"shared-channel").setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("Guest notification probe").setContentText("Notification channel roundtrip passed").build());
+   status.setText("CHANNELS PASS UID="+android.os.Process.myUid()+" listed="+all.size()+" notification posted");
+  }catch(Throwable e){status.setText("CHANNELS FAIL: "+e);android.util.Log.e("PHANToM.Probe","channels",e);}
  }
  void capture(boolean output) {
   try {
