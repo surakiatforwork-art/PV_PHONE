@@ -210,6 +210,18 @@ class GuestPolicy:
     enforcement: str = "legacy; snapshot does not enforce"
     provenance: tuple[str, ...] = ("explicit legacy export; not a live runtime collector",)
 
+    def __post_init__(self):
+        if (type(self.schema_version) is not int or self.schema_version != SCHEMA_VERSION or
+                not isinstance(self.guest, GuestKey)):
+            raise ValueError("Invalid policy identity/schema")
+        modes = dict(self.permissions)
+        if any(not isinstance(k, str) or not k or v not in
+               ("INHERIT", "ALLOW_WITH_HOST_GRANT", "DENY") for k, v in modes.items()):
+            raise ValueError("Invalid normalized permission modes")
+        object.__setattr__(self, "permissions", MappingProxyType(modes))
+        if not isinstance(self.provenance, tuple):
+            raise ValueError("Policy provenance must be immutable")
+
 
 def legacy_policy(export):
     """Normalize an explicit legacy export; never read/write live runtime files."""
@@ -248,7 +260,8 @@ class CloneMetadata:
     schema_version: int = SCHEMA_VERSION
 
     def __post_init__(self):
-        if not isinstance(self.guest, GuestKey) or self.schema_version != SCHEMA_VERSION:
+        if (not isinstance(self.guest, GuestKey) or type(self.schema_version) is not int or
+                self.schema_version != SCHEMA_VERSION):
             raise ValueError("Invalid clone identity/schema")
         if self.display_name is not None and (not isinstance(self.display_name, str) or
                                              not self.display_name.strip() or len(self.display_name) > 80):

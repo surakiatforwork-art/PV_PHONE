@@ -97,6 +97,12 @@ class Contracts(unittest.TestCase):
             legacy_policy({**source, "schema_version": 2})
         with self.assertRaises(ValueError):
             legacy_policy({**source, "permissions": {"x": 999}})
+        supplied = {"android.permission.CAMERA": "DENY"}
+        direct = replace(first, permissions=supplied)
+        supplied["android.permission.CAMERA"] = "INHERIT"
+        self.assertEqual("DENY", direct.permissions["android.permission.CAMERA"])
+        with self.assertRaises(ValueError):
+            replace(first, schema_version=True)
 
     def test_clone_rename_is_metadata_not_identity(self):
         work = CloneMetadata(GuestKey("com.phantom.fixture", 1), "Work", "1")
