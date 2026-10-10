@@ -1,0 +1,24 @@
+--- a/lib/src/main/java/com/lody/virtual/client/hook/proxies/am/MethodProxies.java
++++ b/lib/src/main/java/com/lody/virtual/client/hook/proxies/am/MethodProxies.java
+@@ -1247,6 +1247,10 @@
+     }
+ 
+ 
++    static class CheckPermissionForDevice extends CheckPermission {
++        @Override public String getMethodName() { return "checkPermissionForDevice"; }
++    }
++
+     static class CheckPermission extends MethodProxy {
+ 
+         @Override
+--- a/lib/src/main/java/com/lody/virtual/server/am/VActivityManagerService.java
++++ b/lib/src/main/java/com/lody/virtual/server/am/VActivityManagerService.java
+@@ -236,7 +236,7 @@
+         synchronized (mPidsSelfLocked) {
+             callerApp = findProcessLocked(VBinder.getCallingPid());
+         }
+-        if (callerApp == null) {
++        if (callerApp == null && android.os.Binder.getCallingUid() != VirtualCore.get().myUid()) {
+             throw new SecurityException("Who are you?");
+         }
+         String processName = info.processName;
