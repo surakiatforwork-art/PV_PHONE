@@ -97,7 +97,8 @@ public class MainActivity extends Activity {
    String other=getPackageName().endsWith("other")?"com.phantom.releaseprobe":"com.phantom.releaseprobeother";
    try(android.database.Cursor cursor=getContentResolver().query(Uri.parse("content://"+other+".capture/identity"),null,null,null,null)) {
     if(cursor==null||!cursor.moveToFirst())throw new AssertionError("No provider result");
-    if(cursor.getInt(0)!=android.os.Process.myUid()||!getPackageName().equals(cursor.getString(1)))throw new AssertionError("Caller identity mismatch: "+cursor.getInt(0)+" / "+cursor.getString(1));
+    int expectedUid=android.os.Build.VERSION.SDK_INT>=28?getPackageManager().getApplicationInfo("com.phantom.vphone",0).uid:android.os.Process.myUid();
+    if(cursor.getInt(0)!=expectedUid||!getPackageName().equals(cursor.getString(1)))throw new AssertionError("Caller identity mismatch: "+cursor.getInt(0)+" / "+cursor.getString(1)+" expected UID="+expectedUid);
     status.setText("PROVIDER PASS UID="+cursor.getInt(0)+" package="+cursor.getString(1));
    }
   }catch(Throwable e){status.setText("PROVIDER FAIL: "+e);android.util.Log.e("PHANToM.Probe","provider",e);}

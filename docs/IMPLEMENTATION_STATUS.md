@@ -33,3 +33,13 @@ now receives JPEGs on the user's test page with Timestamp Camera and the system
 camera on the tested Android 16 arm64 device. See
 [capture validation](CAMERA_WEB_CAPTURE_FIX.md). These physical trials do not
 automatically change the diagnostics screen's UNKNOWN capability entries.
+
+## Maps guest startup
+
+Development code 75 fixes the reproduced Maps network UID, CriticalNative Binder,
+screen observer permission and provider attribution startup failures on the same
+Android 16 arm64 device. Maps opens and loads Bangkok search/map/place results on
+two separate guest process launches. Provider package identity and external-cache
+camera output regression checks pass. See [Maps scope](MAPS_GUEST_STARTUP_FIX.md).
+Google Play Services still has separate worker errors; navigation/account login
+are unverified. No release or automatic diagnostics capability activation occurs.

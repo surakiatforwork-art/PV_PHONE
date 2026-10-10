@@ -33,3 +33,7 @@ The current 0.4.9-dev build also fixes native opening of guest external-cache
 capture outputs. DuckDuckGo file-input photo capture now returns a preview on the
 tested Android 16 device with Timestamp Camera and the system camera. See the
 [capture fix and validation scope](docs/CAMERA_WEB_CAPTURE_FIX.md).
+
+Development code 75 fixes the observed Google Maps guest startup crashes on the
+tested Android 16 device. Maps opens, searches and loads map/place content; Google
+account login and navigation remain unverified. See [Maps validation](docs/MAPS_GUEST_STARTUP_FIX.md).
