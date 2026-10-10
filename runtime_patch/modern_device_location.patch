@@ -1,0 +1,31 @@
+--- a/lib/src/main/java/com/lody/virtual/client/hook/proxies/location/LocationManagerStub.java
++++ b/lib/src/main/java/com/lody/virtual/client/hook/proxies/location/LocationManagerStub.java
+@@ -67,6 +67,9 @@
+             addMethodProxy(new FakeReplaceLastPkgMethodProxy("removeNmeaListener", 0));
+         }
++        if (Build.VERSION.SDK_INT >= 31) {
++            GuestLocationHooks.bind(this);
++        }
+     }
+ 
+     private static class FakeReplaceLastPkgMethodProxy extends ReplaceLastPkgMethodProxy {
+         private Object mDefValue;
+--- a/lib/src/main/java/com/lody/virtual/client/fixer/ContextFixer.java
++++ b/lib/src/main/java/com/lody/virtual/client/fixer/ContextFixer.java
+@@ -74,6 +74,6 @@
+ 
+         if (ContextImpl.getAttributionSource != null) {
+-            fixAttributionSource(ContextImpl.getAttributionSource.call(context), hostPkg, VClientImpl.get().getVUid());
++            fixAttributionSource(ContextImpl.getAttributionSource.call(context), hostPkg, VirtualCore.get().myUid());
+         }
+     }
+ 
+@@ -86,8 +86,6 @@
+             Reflect.on(mAttributionSourceState).set("uid", uid);
+             Reflect.on(mAttributionSourceState).set("packageName", pkg);
+ 
+-            Object next = Reflect.on(attr).call("getNext").get();
+-            fixAttributionSource(next, pkg, uid);
+         } catch (Throwable e) {
+             e.printStackTrace();
+         }
