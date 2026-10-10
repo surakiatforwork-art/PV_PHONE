@@ -5,6 +5,7 @@ import com.lody.virtual.client.core.VirtualCore;
 import com.lody.virtual.client.hook.base.BinderInvocationProxy;
 import com.lody.virtual.client.hook.base.BinderInvocationStub;
 import com.lody.virtual.client.hook.base.MethodProxy;
+import com.lody.virtual.client.ipc.VPackageManager;
 import java.lang.reflect.Method;
 import mirror.android.os.ServiceManager;
 
@@ -43,6 +44,16 @@ public class WifiScannerStub extends BinderInvocationProxy {
             @Override public String getMethodName() { return name; }
             @Override public boolean isEnable() { return isAppProcess(); }
             @Override public Object call(Object who, Method method, Object... args) throws Throwable {
+                if (VPackageManager.get().checkPermission("android.permission.ACCESS_WIFI_STATE",
+                        getAppPkg(), getAppUserId()) != 0) {
+                    throw new SecurityException("Guest Wi-Fi permission denied");
+                }
+                if (!"setScanningEnabled".equals(name)) {
+                    boolean fine = VPackageManager.get().checkPermission("android.permission.ACCESS_FINE_LOCATION", getAppPkg(), getAppUserId()) == 0;
+                    boolean coarse = VPackageManager.get().checkPermission("android.permission.ACCESS_COARSE_LOCATION", getAppPkg(), getAppUserId()) == 0;
+                    boolean nearby = "getAvailableChannels".equals(name) && VPackageManager.get().checkPermission("android.permission.NEARBY_WIFI_DEVICES", getAppPkg(), getAppUserId()) == 0;
+                    if (!fine && !coarse && !nearby) throw new SecurityException("Guest scan permission denied");
+                }
                 if (args == null || args.length <= packageIndex || !(args[packageIndex] instanceof String)) {
                     throw new IllegalArgumentException("Unsupported Wi-Fi scanner signature: " + name);
                 }
