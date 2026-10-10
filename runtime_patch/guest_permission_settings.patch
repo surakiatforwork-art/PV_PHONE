@@ -14,21 +14,7 @@
              }
              return false;
          });
---- a/app/src/main/res/menu/app_manage_menu.xml
-+++ b/app/src/main/res/menu/app_manage_menu.xml
-@@ -18,4 +18,12 @@
-         android:orderInCategory="100"
-         android:title="@string/app_manage_redirect_on"
-         app:showAsAction="withText" />
-+
-+
-+    <item
-+        android:id="@+id/action_permissions"
-+        android:orderInCategory="90"
-+        android:title="Permissions"
-+        app:showAsAction="withText" />
-+
- </menu>--- a/lib/src/main/java/com/lody/virtual/server/pm/VPackageManagerService.java
+--- a/lib/src/main/java/com/lody/virtual/server/pm/VPackageManagerService.java
 +++ b/lib/src/main/java/com/lody/virtual/server/pm/VPackageManagerService.java
 @@ -13,11 +13,13 @@
  import android.content.pm.ResolveInfo;
