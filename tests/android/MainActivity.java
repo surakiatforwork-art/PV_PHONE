@@ -15,7 +15,7 @@ public class MainActivity extends Activity {
   Button thumb=new Button(this);thumb.setText("Capture thumbnail");root.addView(thumb);
   Button output=new Button(this);output.setText("Capture output URI");root.addView(output);
   thumb.setOnClickListener(v->capture(false));output.setOnClickListener(v->capture(true));
-  status.setText("CAMERA="+getPackageManager().checkPermission("android.permission.CAMERA",getPackageName())+" UID="+android.os.Process.myUid());
+  status.setText("CAMERA="+getPackageManager().checkPermission("android.permission.CAMERA",getPackageName())+" SELF="+checkSelfPermission("android.permission.CAMERA")+" UID="+android.os.Process.myUid());
   setContentView(root);
  }
  void capture(boolean output) {

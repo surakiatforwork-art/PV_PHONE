@@ -1,0 +1,43 @@
+--- a/lib/src/main/java/com/lody/virtual/client/hook/proxies/am/MethodProxies.java
++++ b/lib/src/main/java/com/lody/virtual/client/hook/proxies/am/MethodProxies.java
+@@ -1722,6 +1722,10 @@
+     }
+ 
+ 
++    static class BroadcastIntentWithFeature extends BroadcastIntent {
++        @Override public String getMethodName() { return "broadcastIntentWithFeature"; }
++    }
++
+     static class BroadcastIntent extends MethodProxy {
+ 
+         @Override
+@@ -1731,22 +1735,24 @@
+ 
+         @Override
+         public Object call(Object who, Method method, Object... args) throws Throwable {
+-            Intent intent = (Intent) args[1];
+-            String type = (String) args[2];
++            int intentIndex = ArrayUtils.indexOfObject(args, Intent.class, 1);
++            if (intentIndex < 0) return 0;
++            Intent intent = (Intent) args[intentIndex];
++            String type = (String) args[intentIndex + 1];
+             intent.setDataAndType(intent.getData(), type);
+             if (VirtualCore.get().getComponentDelegate() != null) {
+                 VirtualCore.get().getComponentDelegate().onSendBroadcast(intent);
+             }
+             Intent newIntent = handleIntent(intent);
+             if (newIntent != null) {
+-                args[1] = newIntent;
++                args[intentIndex] = newIntent;
+             } else {
+                 return 0;
+             }
+ 
+-            if (args[7] instanceof String || args[7] instanceof String[]) {
++            if (args[intentIndex + 6] instanceof String || args[intentIndex + 6] instanceof String[]) {
+                 // clear the permission
+-                args[7] = null;
++                args[intentIndex + 6] = null;
+             }
+             return method.invoke(who, args);
+         }
