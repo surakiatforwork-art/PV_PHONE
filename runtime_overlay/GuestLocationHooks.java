@@ -43,6 +43,12 @@ public final class GuestLocationHooks {
             boolean coarse = !fineOnly && VPackageManager.get().checkPermission(
                     "android.permission.ACCESS_COARSE_LOCATION", guest, getAppUserId()) == PackageManager.PERMISSION_GRANTED;
             if (!fine && !coarse) throw new SecurityException("Guest location permission denied");
+            if (!fine && VirtualCore.get().getPackageManager().checkPermission(
+                    "android.permission.ACCESS_FINE_LOCATION", VirtualCore.get().getHostPkg()) == PackageManager.PERMISSION_GRANTED) {
+                // Android filters precision by the shared host UID. Do not expose
+                // the host's precise fixes to a coarse-only or fine-denied guest.
+                throw new SecurityException("Coarse-only guest needs a precision-filtered location bridge");
+            }
             if (args == null || args.length <= packageIndex || !(args[packageIndex] instanceof String)) {
                 throw new IllegalArgumentException("Unsupported location signature: " + name);
             }

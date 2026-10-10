@@ -52,7 +52,7 @@ public class WifiScannerStub extends BinderInvocationProxy {
                     boolean fine = VPackageManager.get().checkPermission("android.permission.ACCESS_FINE_LOCATION", getAppPkg(), getAppUserId()) == 0;
                     boolean coarse = VPackageManager.get().checkPermission("android.permission.ACCESS_COARSE_LOCATION", getAppPkg(), getAppUserId()) == 0;
                     boolean nearby = "getAvailableChannels".equals(name) && VPackageManager.get().checkPermission("android.permission.NEARBY_WIFI_DEVICES", getAppPkg(), getAppUserId()) == 0;
-                    if (!fine && !coarse && !nearby) throw new SecurityException("Guest scan permission denied");
+                    if (!fine && !nearby) throw new SecurityException("Guest scan permission denied");
                 }
                 if (args == null || args.length <= packageIndex || !(args[packageIndex] instanceof String)) {
                     throw new IllegalArgumentException("Unsupported Wi-Fi scanner signature: " + name);

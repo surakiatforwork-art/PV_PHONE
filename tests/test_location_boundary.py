@@ -16,8 +16,8 @@ class LocationBoundary(unittest.TestCase):
     @unittest.skipUnless(JAVAC, 'JDK required')
     def test_packages_users_arguments_and_denial(self):
         sources = {
-            'android/content/pm/PackageManager.java': 'package android.content.pm; public class PackageManager { public static final int PERMISSION_GRANTED=0; }',
-            'com/lody/virtual/client/core/VirtualCore.java': 'package com.lody.virtual.client.core; public class VirtualCore { public static VirtualCore get(){return new VirtualCore();} public String getHostPkg(){return "test.host";} }',
+            'android/content/pm/PackageManager.java': 'package android.content.pm; public class PackageManager { public static final int PERMISSION_GRANTED=0; public static int hostFine=0; public int checkPermission(String permission,String pkg){return hostFine;} }',
+            'com/lody/virtual/client/core/VirtualCore.java': 'package com.lody.virtual.client.core; public class VirtualCore { public static VirtualCore get(){return new VirtualCore();} public String getHostPkg(){return "test.host";} public android.content.pm.PackageManager getPackageManager(){return new android.content.pm.PackageManager();} }',
             'com/lody/virtual/client/hook/base/MethodProxy.java': '''package com.lody.virtual.client.hook.base;
 import java.lang.reflect.Method;
 public abstract class MethodProxy {
@@ -66,6 +66,10 @@ public class Harness {
    VPackageManager.grants.remove(key);int calls=service.calls;
    try{hook.call(service,method,"gps",request,callback,guest,null,"id");throw new AssertionError();}catch(SecurityException expected){}
    if(service.calls!=calls)throw new AssertionError("Denied guest reached Android");
+   VPackageManager.grants.put(guest+":"+user+":android.permission.ACCESS_COARSE_LOCATION",0);
+   try{hook.call(service,method,"gps",request,callback,guest,null,"id");throw new AssertionError("Precise host fix exposed to coarse-only guest");}catch(SecurityException expected){}
+   if(service.calls!=calls)throw new AssertionError("Fine denial bypassed by shared UID");
+   VPackageManager.grants.clear();
    VPackageManager.grants.put(key,0);
    try{hook.call(service,Service.class.getMethod("denied",String.class,Object.class,Object.class,String.class,String.class,String.class),"gps",request,callback,guest,null,"id");throw new AssertionError();}
    catch(InvocationTargetException expected){if(!(expected.getCause() instanceof SecurityException))throw expected;}
