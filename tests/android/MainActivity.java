@@ -17,6 +17,8 @@ public class MainActivity extends Activity {
   super.onCreate(saved);
   LinearLayout root=new LinearLayout(this); root.setOrientation(1);
   status=new TextView(this); status.setTextSize(18); root.addView(status);
+  Button storage=new Button(this);storage.setText("Test shared device files");root.addView(storage);
+  storage.setOnClickListener(v->testStorage());
   Button thumb=new Button(this);thumb.setText("Capture thumbnail");root.addView(thumb);
   Button output=new Button(this);output.setText("Capture output URI");root.addView(output);
   thumb.setOnClickListener(v->capture(false));output.setOnClickListener(v->capture(true));
@@ -36,6 +38,20 @@ public class MainActivity extends Activity {
   signing.setOnClickListener(v->testSigning());
   status.setText("CAMERA="+getPackageManager().checkPermission("android.permission.CAMERA",getPackageName())+" SELF="+checkSelfPermission("android.permission.CAMERA")+" UID="+android.os.Process.myUid());
   setContentView(root);
+ }
+ void testStorage() {
+  try {
+   String[] paths={"/sdcard/PHANToMStorageProbe/shared.txt", "/storage/emulated/0/PHANToMStorageProbe/shared.txt", "/storage/self/primary/PHANToMStorageProbe/shared.txt", "/sdcard/Download/phantom-storage-probe.txt", "/sdcard/Documents/phantom-storage-probe.txt"};
+   for(String path:paths) {
+    java.io.ByteArrayOutputStream out=new java.io.ByteArrayOutputStream();
+    try(java.io.InputStream in=new java.io.FileInputStream(path)) {byte[] b=new byte[256];int n;while((n=in.read(b))!=-1)out.write(b,0,n);}
+    String value=new String(out.toByteArray(),java.nio.charset.StandardCharsets.UTF_8).trim();
+    if(!"PHANTOM_SHARED_STORAGE_048".equals(value))throw new AssertionError("Unexpected probe content at "+path);
+   }
+   String[] names=new File("/sdcard").list();
+   if(names==null||!java.util.Arrays.asList(names).contains("PHANToMStorageProbe"))throw new AssertionError("Shared root listing failed");
+   status.setText("STORAGE PASS: 5 paths and shared root listing UID="+android.os.Process.myUid());
+  }catch(Throwable e){status.setText("STORAGE FAIL: "+e);}
  }
  void testSigning() {
   try {

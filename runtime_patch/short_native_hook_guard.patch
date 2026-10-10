@@ -1,0 +1,21 @@
+--- a/lib/src/main/jni/A64Inlinehook/And64InlineHook.cpp
++++ b/lib/src/main/jni/A64Inlinehook/And64InlineHook.cpp
+@@ -521,6 +521,18 @@
+         // The NOP ensures the 64-bit literal address is 8-byte aligned for LDR literal.
+         bool needs_nop = (reinterpret_cast<uintptr_t>(original) & 7u) == 0u;
+         int32_t count = needs_nop ? 6 : 5;
++        // Tiny libc wrappers can tail-call another symbol within 8-16 bytes.
++        // Refuse a far jump that would overwrite padding or the next function.
++        // In particular, modern renameat is followed immediately by rmdir.
++        for (int32_t i = 0; i < count - 1; ++i) {
++            uint32_t insn = original[i];
++            bool tail_branch = (insn & 0xfc000000u) == 0x14000000u;
++            bool ret = (insn & 0xfffffc1fu) == 0xd65f0000u;
++            bool undefined = (insn & 0xffff0000u) == 0u;
++            if (tail_branch || ret || undefined) {
++                return NULL;
++            }
++        }
+         if (trampoline) {
+             if (rwx_size < count * 10u) {
+                 return NULL;
