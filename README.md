@@ -15,3 +15,15 @@ Embedded Camera2/CameraX calls are not redirected by intent routing.
 
 See `RELEASE_NOTES.md` for device validation and limitations.
 See `docs/GUEST_COMPATIBILITY.md` for the runtime changes and paired-guest test procedure.
+
+
+## Evidence and architecture foundation
+
+The first additive audit/diagnostic iteration retains the v0.4.8 runtime baseline.
+Start with [reference gap analysis](docs/REFERENCE_ARCHITECTURE_GAP_ANALYSIS.md),
+[implementation status](docs/IMPLEMENTATION_STATUS.md), and
+[offline diagnostic tooling](diagnostics/README.md).
+The models require scoped runtime evidence for ACTIVE and compatibility PASS;
+CI build success cannot activate a subsystem. Android Settings integration,
+per-guest enforcement migration and clone-slot actions are subsequent work.
+No release is produced automatically for these architecture/tooling changes.

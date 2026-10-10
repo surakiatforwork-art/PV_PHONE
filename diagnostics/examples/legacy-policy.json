@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "package_name": "com.phantom.example",
+  "virtual_user_id": 1,
+  "permissions": {
+    "android.permission.CAMERA": 1,
+    "android.permission.READ_CONTACTS": 2
+  },
+  "global_camera_package": "com.example.gcammod",
+  "storage_redirect": false,
+  "configured_location_mode": "DEVICE_PASSTHROUGH",
+  "gms_imported": false
+}

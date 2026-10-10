@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-10-10",
+  "reuse": "ideas-only; no external implementation copied",
+  "sources": [
+    {
+      "repository": "mhmdwaelanwr/PrismSpace",
+      "commit": "990a414f4e0eea68ef50230cb09c3b02ec6d700b",
+      "repositoryLicense": "Apache-2.0",
+      "componentReviewRequired": true
+    },
+    {
+      "repository": "obadadallo95/mirro-android-virtualization",
+      "commit": "74e6a1e3ea1898b2e2a705d7c8b3e730059023b1",
+      "repositoryLicense": "Apache-2.0",
+      "componentReviewRequired": true
+    },
+    {
+      "repository": "mansoorulhaq166/Dual-Space-App",
+      "commit": "12e4a48b80fafd73869b97f2e6737c30c5c3a4a8",
+      "repositoryLicense": "Apache-2.0",
+      "componentReviewRequired": true
+    },
+    {
+      "repository": "eshginfarzali/android-clone-detection",
+      "commit": "23145b7b9e81b911c8f2d7a5d00f8ac1a72c3fa9",
+      "repositoryLicense": "MIT",
+      "componentReviewRequired": true
+    },
+    {
+      "repository": "buithanhninh/app-clone-parity-engineering",
+      "commit": "9d51c15bf573c8b2547d30f923d2d5360a9f623e",
+      "repositoryLicense": "MIT",
+      "componentReviewRequired": true
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "scope": {
+    "sdk": 36,
+    "android_release": "16",
+    "abi": "arm64-v8a",
+    "runtime_build": "UNMEASURED_EXAMPLE",
+    "device_class": "EXAMPLE_NOT_COLLECTED"
+  },
+  "requirements": {
+    "package_manager": [
+      "package_manager.runtime_health"
+    ],
+    "activity_manager": [
+      "activity_manager.runtime_health"
+    ],
+    "activity_task_manager": [
+      "activity_task_manager.runtime_health"
+    ],
+    "instrumentation": [
+      "instrumentation.runtime_health"
+    ],
+    "binder": [
+      "binder.runtime_health"
+    ],
+    "file_io": [
+      "file_io.runtime_health"
+    ],
+    "native_io": [
+      "native_io.runtime_health"
+    ],
+    "guest_permissions": [
+      "guest_permissions.runtime_health"
+    ],
+    "location": [
+      "location.runtime_health"
+    ],
+    "camera_provider": [
+      "camera_provider.runtime_health"
+    ],
+    "browser_routing": [
+      "browser_routing.runtime_health"
+    ],
+    "webview": [
+      "webview.runtime_health"
+    ],
+    "notifications": [
+      "notifications.runtime_health"
+    ],
+    "clipboard": [
+      "clipboard.runtime_health"
+    ],
+    "gms": [
+      "gms.runtime_health"
+    ],
+    "native_loading": [
+      "native_loading.runtime_health"
+    ],
+    "pending_intent": [
+      "pending_intent.runtime_health"
+    ],
+    "broadcast": [
+      "broadcast.runtime_health"
+    ],
+    "service": [
+      "service.runtime_health"
+    ],
+    "content_provider": [
+      "content_provider.runtime_health"
+    ],
+    "role_manager": [
+      "role_manager.runtime_health"
+    ],
+    "storage": [
+      "storage.runtime_health"
+    ],
+    "android16_transactions": [
+      "android16_transactions.runtime_health"
+    ]
+  },
+  "evidence": [],
+  "matrix": [],
+  "historical_notes": [
+    "This is an unmeasured example, not an on-device report. All subsystem states intentionally remain UNKNOWN.",
+    "v0.4.8 documented File Manager+ and shared-storage device trials; those historical notes are not imported as current runtime evidence.",
+    "Future collectors must include exact app/build/device scope and sanitized artifact references."
+  ]
+}
