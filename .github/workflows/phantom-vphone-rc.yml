@@ -48,6 +48,7 @@ jobs:
           patch -p1 < ../runtime_patch/camera_provider.patch
           patch -p1 < ../runtime_patch/shared_device_storage.patch
           patch -p1 < ../runtime_patch/short_native_hook_guard.patch
+          patch -p1 < ../runtime_patch/modern_storage_appops.patch
           patch -p1 < ../runtime_patch/permission_broker_xposed.patch
           patch -p1 < ../runtime_patch/guest_permission_settings.patch
           patch -p1 < ../runtime_patch/cmd_receiver_security.patch

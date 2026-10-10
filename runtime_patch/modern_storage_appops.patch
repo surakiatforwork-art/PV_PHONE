@@ -1,0 +1,50 @@
+--- a/lib/src/main/java/com/lody/virtual/client/hook/proxies/appops/AppOpsManagerStub.java
++++ b/lib/src/main/java/com/lody/virtual/client/hook/proxies/appops/AppOpsManagerStub.java
+@@ -30,6 +30,12 @@
+     protected void onBindMethods() {
+         super.onBindMethods();
+         addMethodProxy(new BaseMethodProxy("checkOperation", 1, 2));
++        addMethodProxy(new BaseMethodProxy("checkOperationRaw", 1, 2));
++        addMethodProxy(new BaseMethodProxy("checkOperationForDevice", 1, 2));
++        addMethodProxy(new BaseMethodProxy("checkOperationRawForDevice", 1, 2));
++        addMethodProxy(new BaseMethodProxy("noteOperationForDevice", 1, 2));
++        addMethodProxy(new BaseMethodProxy("startOperationForDevice", 2, 3));
++        addMethodProxy(new BaseMethodProxy("finishOperationForDevice", 2, 3));
+         addMethodProxy(new BaseMethodProxy("noteOperation", 1, 2));
+         addMethodProxy(new BaseMethodProxy("startOperation", 2, 3));
+         addMethodProxy(new BaseMethodProxy("finishOperation", 2, 3));
+@@ -53,6 +59,25 @@
+         });
+     }
+ 
++    @Override
++    public void inject() throws Throwable {
++        super.inject();
++        Object proxy = getInvocationStub().getProxyInterface();
++        // Android 16's app-op mode cache reads the static service directly.
++        try {
++            java.lang.reflect.Field service = android.app.AppOpsManager.class.getDeclaredField("sService");
++            service.setAccessible(true);
++            service.set(null, proxy);
++        } catch (NoSuchFieldException ignored) {
++        }
++        Object manager = getHostContext().getSystemService(Context.APP_OPS_SERVICE);
++        if (manager != null) {
++            java.lang.reflect.Field service = android.app.AppOpsManager.class.getDeclaredField("mService");
++            service.setAccessible(true);
++            service.set(manager, proxy);
++        }
++    }
++
+     private class BaseMethodProxy extends StaticMethodProxy {
+         final int pkgIndex;
+         final int uidIndex;
+@@ -68,7 +93,7 @@
+             if (pkgIndex != -1 && args.length > pkgIndex && args[pkgIndex] instanceof String) {
+                 args[pkgIndex] = getHostPkg();
+             }
+-            if (uidIndex != -1 && args[uidIndex] instanceof Integer) {
++            if (uidIndex != -1 && args.length > uidIndex && args[uidIndex] instanceof Integer) {
+                 args[uidIndex] = getRealUid();
+             }
+             return true;

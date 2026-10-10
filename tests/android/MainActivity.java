@@ -50,7 +50,12 @@ public class MainActivity extends Activity {
    }
    String[] names=new File("/sdcard").list();
    if(names==null||!java.util.Arrays.asList(names).contains("PHANToMStorageProbe"))throw new AssertionError("Shared root listing failed");
-   status.setText("STORAGE PASS: 5 paths and shared root listing UID="+android.os.Process.myUid());
+   File scratch=new File(getFilesDir(),"storage-probe-"+System.nanoTime());
+   if(!scratch.mkdir())throw new AssertionError("mkdir failed");
+   File original=new File(scratch,"original.txt"),renamed=new File(scratch,"renamed.txt");
+   try(java.io.FileOutputStream out=new java.io.FileOutputStream(original)){out.write(42);}
+   if(!original.renameTo(renamed)||!renamed.delete()||!scratch.delete())throw new AssertionError("rename/delete/rmdir failed");
+   status.setText("STORAGE PASS: 5 paths, root listing, rename/delete/rmdir UID="+android.os.Process.myUid());
   }catch(Throwable e){status.setText("STORAGE FAIL: "+e);}
  }
  void testSigning() {
