@@ -50,6 +50,7 @@ public final class CaptureBridgeProvider extends ContentProvider {
         if (stale != null) for (File file : stale) {
             if (System.currentTimeMillis() - file.lastModified() > MAX_AGE_MS) file.delete();
         }
+        android.util.Log.i("PHANToM.Capture", "prepare route root=" + dir.getAbsolutePath());
         String token = UUID.randomUUID().toString();
         Properties route = new Properties();
         route.setProperty("uri", original.toString());
@@ -70,8 +71,12 @@ public final class CaptureBridgeProvider extends ContentProvider {
     }
 
     @Override public boolean onCreate() { return true; }
-    @Override public String getType(Uri uri) { return "image/jpeg"; }
+    @Override public String getType(Uri uri) {
+        android.util.Log.i("PHANToM.Capture", "bridge getType");
+        return "image/jpeg";
+    }
     @Override public Cursor query(Uri uri, String[] projection, String selection, String[] args, String sort) {
+        android.util.Log.i("PHANToM.Capture", "bridge query");
         String[] columns = projection == null ? new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE} : projection;
         MatrixCursor cursor = new MatrixCursor(columns);
         Object[] values = new Object[columns.length];
@@ -87,10 +92,12 @@ public final class CaptureBridgeProvider extends ContentProvider {
     @Override public int update(Uri uri, ContentValues values, String selection, String[] args) { throw new UnsupportedOperationException(); }
 
     @Override public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {
+        android.util.Log.i("PHANToM.Capture", "bridge open mode=" + mode + " root=" + routeDir(getContext()).getAbsolutePath());
         String token = uri.getLastPathSegment();
         if (token == null || !token.matches("[a-f0-9-]{36}")) throw new FileNotFoundException("Invalid capture token");
         File file = new File(routeDir(getContext()), token);
         if (!file.isFile() || System.currentTimeMillis() - file.lastModified() > MAX_AGE_MS) {
+            android.util.Log.w("PHANToM.Capture", "Capture route unavailable exists=" + file.isFile());
             throw new FileNotFoundException("Capture route expired");
         }
         long identity = Binder.clearCallingIdentity();
@@ -122,6 +129,7 @@ public final class CaptureBridgeProvider extends ContentProvider {
             }
             throw new FileNotFoundException("Unsupported content provider client");
         } catch (Exception e) {
+            android.util.Log.e("PHANToM.Capture", "Guest capture output failed", e);
             FileNotFoundException failure = new FileNotFoundException("Cannot open guest capture output: " + e);
             failure.initCause(e);
             throw failure;

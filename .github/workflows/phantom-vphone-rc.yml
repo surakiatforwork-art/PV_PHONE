@@ -121,7 +121,7 @@ jobs:
           field = "    buildConfigField 'String', 'DIAGNOSTICS_SOURCE', " + repr(json.dumps(os.environ["GITHUB_SHA"]))
           path.write_text(path.read_text().replace("defaultConfig {", "defaultConfig {\n" + field))
           PY
-          sed -i 's/versionCode 1/versionCode 69/' app/build.gradle
+          sed -i 's/versionCode 1/versionCode 70/' app/build.gradle
           sed -i 's/versionName "1.0.0"/versionName "0.4.9-dev"/' app/build.gradle
           sed -i 's#<string name="app_name">VirtualApp</string>#<string name="app_name">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
           sed -i 's#<string name="vxp">VirtualApp</string>#<string name="vxp">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
