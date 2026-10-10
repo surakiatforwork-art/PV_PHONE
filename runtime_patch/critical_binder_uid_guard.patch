@@ -1,0 +1,16 @@
+--- a/lib/src/main/jni/Foundation/VMPatch.cpp
++++ b/lib/src/main/jni/Foundation/VMPatch.cpp
+@@ -391,6 +391,13 @@
+ inline void replaceGetCallingUid(jboolean isArt) {
++    // CriticalNative has no managed JNI transition. Calling Java from this
++    // replacement corrupts ART's managed stack during concurrent GC.
++    // Preserve the platform Binder identity instead of installing that hook.
++    if (isArt && patchEnv.api_level >= 28) {
++        ALOGI("replaceGetCallingUid: preserve CriticalNative platform identity");
++        return;
++    }
+     auto binderClass = findClassLocal("android/os/Binder");
+     if (isArt) {
+         JNIEnv *env = Environment::current();
+         jmethodID methodId = binderClass->getStaticMethod<jint(void)>("getCallingUid").getId();
+ 

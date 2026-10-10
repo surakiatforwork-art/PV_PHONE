@@ -49,6 +49,8 @@ jobs:
           patch -p1 < ../runtime_patch/shared_device_storage.patch
           patch -p1 < ../runtime_patch/short_native_hook_guard.patch
           patch -p1 < ../runtime_patch/native_open_redirect.patch
+          patch -p1 < ../runtime_patch/critical_binder_uid_guard.patch
+          patch -p1 < ../runtime_patch/modern_unbind_finished.patch
           patch -p1 < ../runtime_patch/modern_storage_appops.patch
           patch -p1 < ../runtime_patch/permission_broker_xposed.patch
           patch -p1 < ../runtime_patch/guest_permission_settings.patch
@@ -123,7 +125,7 @@ jobs:
           field = "    buildConfigField 'String', 'DIAGNOSTICS_SOURCE', " + repr(json.dumps(os.environ["GITHUB_SHA"]))
           path.write_text(path.read_text().replace("defaultConfig {", "defaultConfig {\n" + field))
           PY
-          sed -i 's/versionCode 1/versionCode 72/' app/build.gradle
+          sed -i 's/versionCode 1/versionCode 73/' app/build.gradle
           sed -i 's/versionName "1.0.0"/versionName "0.4.9-dev"/' app/build.gradle
           sed -i 's#<string name="app_name">VirtualApp</string>#<string name="app_name">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
           sed -i 's#<string name="vxp">VirtualApp</string>#<string name="vxp">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
