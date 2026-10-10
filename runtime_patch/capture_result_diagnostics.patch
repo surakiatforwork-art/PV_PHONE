@@ -1,0 +1,19 @@
+--- a/lib/src/main/java/android/app/TransactionHandlerProxy.java
++++ b/lib/src/main/java/android/app/TransactionHandlerProxy.java
+@@ -206,6 +206,16 @@
+ 
+     @Override
+     public void handleSendResult(ActivityClientRecord r, List results, String reason) {
++        if (results != null) for (Object result : results) {
++            try {
++                java.lang.reflect.Field request = result.getClass().getDeclaredField("mRequestCode");
++                java.lang.reflect.Field code = result.getClass().getDeclaredField("mResultCode");
++                request.setAccessible(true);
++                code.setAccessible(true);
++                Log.i("PHANToM.Capture", "framework result request=" + request.get(result)
++                        + " code=" + code.get(result) + " activity=" + (r == null ? "null" : "present"));
++            } catch (Exception e) { Log.w("PHANToM.Capture", "Cannot inspect result metadata", e); }
++        }
+         originalHandler.handleSendResult(r, results, reason);
+     }
+ 

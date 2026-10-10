@@ -34,9 +34,12 @@ public final class CaptureBridgeProvider extends ContentProvider {
 
     public static void prepareOutput(Context host, Intent intent) throws Exception {
         Uri original = intent.getParcelableExtra(MediaStore.EXTRA_OUTPUT);
+        android.util.Log.i("PHANToM.Capture", "prepare output present=" + (original != null)
+                + " authority=" + (original == null ? "none" : original.getAuthority()));
         if (original == null || !"content".equals(original.getScheme())) return;
         int user = VUserHandle.myUserId();
         ProviderInfo info = VPackageManager.get().resolveContentProvider(original.getAuthority(), 0, user);
+        android.util.Log.i("PHANToM.Capture", "virtual output provider=" + (info != null));
         if (info == null) return; // Real Android providers already support Android URI grants.
         if (!info.packageName.equals(VClientImpl.get().getCurrentPackage())) {
             throw new SecurityException("Capture output must belong to the requesting guest");
@@ -108,7 +111,12 @@ public final class CaptureBridgeProvider extends ContentProvider {
                     constructor.setAccessible(true);
                     ContentProviderClient client = (ContentProviderClient) constructor.newInstance(
                             getContext().getContentResolver(), provider, true);
-                    try { return client.openFile(original, mode); }
+                    try {
+                        ParcelFileDescriptor output = client.openFile(original, mode);
+                        android.util.Log.i("PHANToM.Capture", "guest output opened mode=" + mode
+                                + " bytes=" + (output == null ? -1 : output.getStatSize()));
+                        return output;
+                    }
                     finally { client.release(); }
                 }
             }
