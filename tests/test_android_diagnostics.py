@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class AndroidDiagnosticsBoundary(unittest.TestCase):
     def test_catalog_matches_contract(self):
-        source = (ROOT / "runtime_overlay/EngineDiagnosticsActivity.java").read_text()
+        source = (ROOT / "runtime_overlay/EngineDiagnosticsActivity.java").read_text(encoding="utf-8")
         catalog = source.split("SUBSYSTEMS = {", 1)[1].split("};", 1)[0]
         self.assertEqual(tuple(re.findall(r'"([a-z0-9_]+)"', catalog)), SUBSYSTEMS)
         # This surface has no evidence importer: it must never claim ACTIVE.
@@ -20,9 +20,9 @@ class AndroidDiagnosticsBoundary(unittest.TestCase):
             self.assertNotIn(mutation, source)
 
     def test_private_activity_and_build_wiring(self):
-        patch = (ROOT / "runtime_patch/engine_diagnostics.patch").read_text()
+        patch = (ROOT / "runtime_patch/engine_diagnostics.patch").read_text(encoding="utf-8")
         self.assertIn('android:exported="false"', patch)
-        workflow = (ROOT / ".github/workflows/phantom-vphone-rc.yml").read_text()
+        workflow = (ROOT / ".github/workflows/phantom-vphone-rc.yml").read_text(encoding="utf-8")
         self.assertIn("../runtime_patch/engine_diagnostics.patch", workflow)
         self.assertIn("cp runtime_overlay/EngineDiagnosticsActivity.java", workflow)
         self.assertIn("DIAGNOSTICS_SOURCE", workflow)

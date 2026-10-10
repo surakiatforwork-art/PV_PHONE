@@ -91,6 +91,17 @@ jobs:
           cp runtime_overlay/HomeAppAdapter.java             runtime/app/src/main/java/io/virtualapp/home/adapters/HomeAppAdapter.java
           cp -r runtime_overlay/res/* runtime/app/src/main/res/
 
+      - name: Validate merged manifest source
+        run: |
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          root = ET.parse("runtime/app/src/main/AndroidManifest.xml").getroot()
+          android = "{http://schemas.android.com/apk/res/android}"
+          activities = [a for a in root.findall("application/activity")
+                        if a.get(android + "name") == ".settings.EngineDiagnosticsActivity"]
+          assert len(activities) == 1 and activities[0].get(android + "exported") == "false"
+          PY
+
       - name: Assert browser/activity compatibility hooks
         run: |
           grep -q 'IActivityTaskManagerSingleton' runtime/lib/src/main/java/com/lody/virtual/client/hook/proxies/am/ActivityTaskManagerStub.java
