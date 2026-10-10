@@ -1,3 +1,5 @@
+[Reading 65 lines from start (total: 65 lines, 0 remaining)]
+
 # PHANToM VPhone Permission Model
 
 ## Host / guest model
@@ -63,3 +65,19 @@ The embedded VirtualApp Xposed runtime is disabled in PHANToM VPhone and the Xpo
 controls are removed from Settings. This only affects the embedded runtime inside
 PHANToM VPhone. It does not enable, disable, patch or modify Xposed/LSPosed/Magisk or
 any normal application installed outside PHANToM VPhone.
+
+[executed on device: PHANToM (60ef0451-feba-4882-8849-367db28e542d)]
+## Per-guest permission settings
+
+Each installed Guest has a Permissions page under Settings > App Manage > Guest menu > Permissions.
+Every permission requested by that Guest can be set to:
+
+- Default: inherit the real PHANToM host permission state.
+- Allow: request/use the PHANToM host permission when Android permits it.
+- Deny: force PERMISSION_DENIED for that Guest inside the Virtual Package Manager even when the host has the permission.
+
+Policies are persisted per package and virtual user in the PHANToM private sandbox. The policy store is file-backed so virtual processes and the package-manager service see updates across processes.
+
+On Android 11+, legacy READ_EXTERNAL_STORAGE / WRITE_EXTERNAL_STORAGE requests are bridged to PHANToM's All files access when granted, improving compatibility with older file-manager apps.
+
+Because all Guests still execute under the PHANToM host UID, this virtual Deny layer is API-level policy rather than a separate Linux UID sandbox. Direct kernel-level access available to the host cannot be made fully independent per Guest without a stronger isolation architecture.
