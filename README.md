@@ -6,7 +6,7 @@ The root app module is the original import/test harness. The runtime application
 is built by `.github/workflows/phantom-vphone-rc.yml`, which fetches a pinned
 VirtualApp commit and applies `runtime_patch` and `runtime_overlay`.
 
-Version 0.4.7 fixes third-party camera provider discovery, including GCam mods with arbitrary package names. Version 0.4.6 improves guest notification, locales, provider identity, signing metadata and PendingIntent routing. DuckDuckGo basic browsing passed on the tested Android 16 device; Chrome and Google Play remain unsupported for normal use.
+Version 0.4.8 fixes shared-file access, the Android 16 All files access permission loop and File Manager+ native startup crashes. Version 0.4.7 fixes third-party camera provider discovery, including GCam mods with arbitrary package names. Version 0.4.6 improves guest notification, locales, provider identity, signing metadata and PendingIntent routing. DuckDuckGo basic browsing passed on the tested Android 16 device; Chrome and Google Play remain unsupported for normal use.
 
 The signed, non-debuggable release build retains the existing key. Guest applications share
 the host UID; per-guest Deny is a virtual PackageManager policy, not a Linux sandbox.

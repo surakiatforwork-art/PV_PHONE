@@ -41,6 +41,7 @@ public class MainActivity extends Activity {
  }
  void testStorage() {
   try {
+   if(android.os.Build.VERSION.SDK_INT>=30&&!android.os.Environment.isExternalStorageManager())throw new AssertionError("All files access query disagrees with host grant");
    String[] paths={"/sdcard/PHANToMStorageProbe/shared.txt", "/storage/emulated/0/PHANToMStorageProbe/shared.txt", "/storage/self/primary/PHANToMStorageProbe/shared.txt", "/sdcard/Download/phantom-storage-probe.txt", "/sdcard/Documents/phantom-storage-probe.txt"};
    for(String path:paths) {
     java.io.ByteArrayOutputStream out=new java.io.ByteArrayOutputStream();

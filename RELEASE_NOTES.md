@@ -1,3 +1,24 @@
+# PHANToM VPhone v0.4.8
+
+Enable normal guest access to shared device files and fix File Manager+ startup on the tested Android 16 device.
+
+- Honor Storage Redirect off (default), keeping real shared folders visible rather than forcing virtual SD-card redirection on Android 11+.
+- Keep the existing private Android/data and Android/obb redirection; explicitly enabled Storage Redirect remains available. Restart guests after changing this setting.
+- Route modern device-aware/raw AppOps checks and Android 16 cached AppOps services to the actual host UID/package. Return the real Android permission mode rather than fabricating grants. This fixes the All files access permission loop.
+- Guard ARM64 far-jump hooks against overwriting tiny libc wrappers and neighboring functions. The old renameat hook corrupted adjacent rmdir and crashed File Manager+ during startup.
+- Signed update, versionCode 67, existing signer and guest data retained.
+
+Device validation: Infinix X6856, Android 16/API 36, arm64.
+- Both arm64 and universal APKs passed a virtual-UID probe checking All files access, five shared-file paths, root directory enumeration, mkdir/write/rename/delete/rmdir.
+- Before the fixes, the probe reproduced the rmdir native crash and disagreement between guest All files access and the host's granted permission.
+- File Manager+ com.alphainventor.filemanager 3.8.3 opens within PHANToM's StubActivity, passes the storage permission gate and browses real shared storage.
+- Its text viewer opened /sdcard/PHANToMStorageProbe/shared.txt and displayed the exact test marker from the device file.
+- Disposable guest and test files removed; final arm64 APK installed. Existing camera selection and user guest data preserved.
+
+Broad access requires PHANToM's Android All files access permission. Android still restricts other apps' private files and protected system directories. This is shared-storage compatibility, not a guarantee that every guest app can launch or that MediaStore categorization, cloud storage and SD cards work on every device. Existing Chrome/Google Play/GCam build limitations remain.
+
+Build source: 91e32c4. GitHub Actions run 38038059964 passed.
+
 # PHANToM VPhone v0.4.7
 
 Fix camera provider selection for third-party cameras, including GCam mods with arbitrary package names.
