@@ -24,6 +24,6 @@ Install both as guests. Test channels in both, delete one while checking the oth
 
 ### Camera provider discovery correction (0.4.7)
 
-Android 11+ restricts implicit capture intent discovery to preinstalled system cameras. PHANToM now probes installed packages explicitly for photo/video capture support, matching the package-specific routing intent. This makes third-party handlers such as Timestamp Camera and LINE Camera discoverable. A provider that cannot capture a photo no longer silently opens the system camera from Test Camera. Device result validation is pending.
+Android 11+ restricts implicit capture intent discovery to preinstalled system cameras. PHANToM now probes installed packages explicitly for photo/video capture support, matching the package-specific routing intent. This makes third-party handlers such as Timestamp Camera and LINE Camera discoverable. A provider that cannot capture a photo no longer silently opens the system camera from Test Camera. Device validation on Android 16: picker shows GCam mod `com.meitu.meiyancamera`, Timestamp Camera and LINE Camera. Guest capture launches the selected GCam mod. Timestamp Camera returns RESULT_OK with 300,055 bytes in the guest output URI. The installed GCam mod crashes during confirmation with missing image data; the same crash occurs when launched directly outside PHANToM.
 
 Reference: https://developer.android.com/about/versions/11/behavior-changes-11#media-capture

@@ -1,3 +1,22 @@
+# PHANToM VPhone v0.4.7
+
+Fix camera provider selection for third-party cameras, including GCam mods with arbitrary package names.
+
+- Discover capture handlers by explicitly querying every installed package. Android 11+ implicit queries otherwise return system cameras only.
+- Show photo/video capture capability per provider. No hardcoded camera package allowlist.
+- Test Camera reports unsupported photo capture instead of silently switching to the system camera.
+- Signed release update, versionCode 66, preserving guest data and existing signer.
+
+Device validation: Infinix X6856, Android 16/API 36, arm64.
+- Picker lists GCam mod com.meitu.meiyancamera, Timestamp Camera and LINE Camera.
+- Guest capture opens the selected GCam mod CaptureActivity.
+- Timestamp Camera returns RESULT_OK and writes a 300,055-byte image to the guest output URI.
+- The installed GCam mod crashes when confirming capture with "received an image, but it did not have any image data". The same failure occurs when launched directly outside PHANToM; this GCam build is not validated for successful capture on this device.
+- Universal APK also passed Timestamp Camera capture on the arm64 device. Final installed APK is arm64; the selected provider is the GCam mod.
+- Existing limitations for Chrome, Google Play services and embedded Camera2/CameraX previews remain; see v0.4.6 compatibility notes. Routing applies to camera capture intents.
+
+Build source: e1ff1d3. GitHub Actions run 38036244917 passed.
+
 # PHANToM VPhone v0.4.6
 
 Signed maintenance release improving guest notification and identity handling.
