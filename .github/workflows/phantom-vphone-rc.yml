@@ -62,6 +62,10 @@ jobs:
           patch -p1 < ../runtime_patch/activity_task_manager_injection.patch
           patch -p1 < ../runtime_patch/app_instrumentation_start_activity.patch
           patch -p1 < ../runtime_patch/role_manager_invocation.patch
+          mkdir -p lib/src/main/java/com/lody/virtual/client/hook/proxies/permission
+          cp ../runtime_overlay/PermissionManagerStub.java lib/src/main/java/com/lody/virtual/client/hook/proxies/permission/PermissionManagerStub.java
+          cp ../runtime_overlay/CaptureBridgeProvider.java lib/src/main/java/com/lody/virtual/client/stub/CaptureBridgeProvider.java
+          patch -p1 < ../runtime_patch/modern_permission_capture_output.patch
           cd ..
           cp runtime_overlay/BaseVirtualInitializer.java             runtime/app/src/main/java/io/virtualapp/delegate/BaseVirtualInitializer.java
           cp runtime_overlay/GmsSupport.java             runtime/lib/src/main/java/com/lody/virtual/GmsSupport.java

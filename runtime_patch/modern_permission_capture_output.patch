@@ -1,0 +1,53 @@
+--- a/lib/src/main/java/com/lody/virtual/client/core/InvocationStubManager.java
++++ b/lib/src/main/java/com/lody/virtual/client/core/InvocationStubManager.java
+@@ -201,6 +201,9 @@
+             	addInjector(new ActivityTaskManagerStub());
+             	addInjector(new UriGrantsManagerStub());
+             	addInjector(new RoleManagerStub());
++                if (Build.VERSION.SDK_INT >= 31) {
++                    addInjector(new com.lody.virtual.client.hook.proxies.permission.PermissionManagerStub());
++                }
+ 
+             	// http://aospxref.com/android-10.0.0_r47/xref/frameworks/base/core/java/android/os/IDeviceIdentifiersPolicyService.aidl#24
+             	addInjector(new DeviceIdentifiersPolicyServiceStub());
+--- a/lib/src/main/java/com/lody/virtual/client/hook/proxies/am/MethodProxies.java
++++ b/lib/src/main/java/com/lody/virtual/client/hook/proxies/am/MethodProxies.java
+@@ -450,6 +450,7 @@
+                     MediaStore.ACTION_IMAGE_CAPTURE_SECURE.equals(intent.getAction())) {
+                 handleMediaCaptureRequest(intent);
+                 applySelectedCameraProvider(intent);
++                com.lody.virtual.client.stub.CaptureBridgeProvider.prepareOutput(getHostContext(), intent);
+             }
+ 
+             String resultWho = null;
+@@ -1262,7 +1263,14 @@
+             if (permission.startsWith("com.google")) {
+                 return PackageManager.PERMISSION_GRANTED;
+             }
+-            args[args.length - 1] = getRealUid();
++            if (args.length >= 3 && args[1] instanceof Integer && args[2] instanceof Integer) {
++                int pid = (Integer) args[1];
++                int uid = (Integer) args[2];
++                if (pid == android.os.Process.myPid() || uid == getVUid() || uid == getRealUid()) {
++                    return VPackageManager.get().checkPermission(
++                            permission, getAppPkg(), VUserHandle.myUserId());
++                }
++            }
+             return method.invoke(who, args);
+         }
+ 
+--- a/app/src/main/AndroidManifest.xml
++++ b/app/src/main/AndroidManifest.xml
+@@ -171,6 +171,12 @@
+ 
+ 
+ 
++        <provider
++            android:name="com.lody.virtual.client.stub.CaptureBridgeProvider"
++            android:authorities="${applicationId}.capturebridge"
++            android:exported="false"
++            android:grantUriPermissions="true" />
++
+         <receiver
+             android:name=".dev.CmdReceiver"
+             android:permission="android.permission.DUMP"
