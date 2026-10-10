@@ -103,8 +103,12 @@ final class GuestPermissionBroker {
             }
         }
 
+        boolean needsBroadStorage = requestedSet.contains(Manifest.permission.MANAGE_EXTERNAL_STORAGE)
+                || requestedSet.contains(Manifest.permission.READ_EXTERNAL_STORAGE)
+                || requestedSet.contains(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
-                && requestedSet.contains(Manifest.permission.MANAGE_EXTERNAL_STORAGE)
+                && needsBroadStorage
                 && !Environment.isExternalStorageManager()
                 && !attemptedSpecial.contains(SPECIAL_ALL_FILES)) {
             plan.specialKey = SPECIAL_ALL_FILES;
