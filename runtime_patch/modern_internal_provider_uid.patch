@@ -1,0 +1,14 @@
+--- a/lib/src/main/java/com/lody/virtual/client/hook/providers/InternalProviderHook.java
++++ b/lib/src/main/java/com/lody/virtual/client/hook/providers/InternalProviderHook.java
+@@ -12,6 +12,11 @@
+     @Override protected int attributionUid() {
++        // Match the actual Binder UID now that CriticalNative identity is kept
++        // intact. Keep the guest package for virtual provider package resolution.
++        if (android.os.Build.VERSION.SDK_INT >= 28) {
++            return com.lody.virtual.client.core.VirtualCore.get().myUid();
++        }
+         // NativeEngine exposes the caller's base virtual UID inside virtual provider processes.
+         return com.lody.virtual.client.VClientImpl.get().getBaseVUid();
+     }
+ 
+     public InternalProviderHook(Object base) {
