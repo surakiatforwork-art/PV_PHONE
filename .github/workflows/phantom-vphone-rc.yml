@@ -25,9 +25,9 @@ jobs:
 
       - name: Fetch VirtualApp runtime
         run: |
-          curl -L https://github.com/ISEKHON/VirtualApp/archive/refs/heads/main.zip -o runtime.zip
+          curl -L https://github.com/ISEKHON/VirtualApp/archive/b3c634ad7941765df3da84a207aca94b7861afae.zip -o runtime.zip
           unzip -q runtime.zip
-          mv VirtualApp-main runtime
+          mv VirtualApp-b3c634ad7941765df3da84a207aca94b7861afae runtime
 
       - name: Build compile-only Android 16 stubs
         run: |
@@ -48,6 +48,7 @@ jobs:
           patch -p1 < ../runtime_patch/camera_provider.patch
           patch -p1 < ../runtime_patch/permission_broker_xposed.patch
           patch -p1 < ../runtime_patch/guest_permission_settings.patch
+          patch -p1 < ../runtime_patch/cmd_receiver_security.patch
 
           # Android 10-16 activity/browser compatibility layers that must not
           # be dropped when CI fetches a clean upstream VirtualApp tree.
@@ -81,8 +82,8 @@ jobs:
         working-directory: runtime
         run: |
           sed -i 's/applicationId "io.va.exposed64"/applicationId "com.phantom.vphone"/' app/build.gradle
-          sed -i 's/versionCode 1/versionCode 63/' app/build.gradle
-          sed -i 's/versionName "1.0.0"/versionName "0.4.4-alpha"/' app/build.gradle
+          sed -i 's/versionCode 1/versionCode 64/' app/build.gradle
+          sed -i 's/versionName "1.0.0"/versionName "0.4.5"/' app/build.gradle
           sed -i 's#<string name="app_name">VirtualApp</string>#<string name="app_name">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
           sed -i 's#<string name="vxp">VirtualApp</string>#<string name="vxp">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
           sed -i 's/VirtualApp-${variant.versionName}-${abi}.apk/PHANToM-VPhone-${variant.versionName}-${abi}.apk/' app/build.gradle
@@ -124,25 +125,25 @@ jobs:
           PHANTOM_KEY_PASSWORD: ${{ secrets.PHANTOM_ALPHA_KEY_PASSWORD }}
         run: |
           chmod +x gradlew
-          ./gradlew :app:assembleDebug --no-daemon --stacktrace
+          ./gradlew :app:assembleRelease --no-daemon --stacktrace
 
       - name: Verify signing
         env:
           PHANTOM_KEYSTORE_PATH: ${{ github.workspace }}/phantom-alpha.jks
         run: |
-          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose runtime/app/build/outputs/apk/debug/*-arm64-v8a.apk
-          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose runtime/app/build/outputs/apk/debug/*-universal.apk
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose runtime/app/build/outputs/apk/release/*-arm64-v8a.apk
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose runtime/app/build/outputs/apk/release/*-universal.apk
 
       - name: Upload arm64 APK
         uses: actions/upload-artifact@v4
         with:
-          name: PHANToM-VPhone-v0.4.4-alpha-arm64
-          path: runtime/app/build/outputs/apk/debug/*-arm64-v8a.apk
+          name: PHANToM-VPhone-v0.4.5-arm64
+          path: runtime/app/build/outputs/apk/release/*-arm64-v8a.apk
           retention-days: 14
 
       - name: Upload universal APK
         uses: actions/upload-artifact@v4
         with:
-          name: PHANToM-VPhone-v0.4.4-alpha-universal
-          path: runtime/app/build/outputs/apk/debug/*-universal.apk
+          name: PHANToM-VPhone-v0.4.5-universal
+          path: runtime/app/build/outputs/apk/release/*-universal.apk
           retention-days: 14

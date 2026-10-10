@@ -1,0 +1,8 @@
+--- a/app/src/main/AndroidManifest.xml
++++ b/app/src/main/AndroidManifest.xml
+@@ -1,4 +1,5 @@
+         <receiver
+             android:name=".dev.CmdReceiver"
++            android:permission="android.permission.DUMP"
+             android:enabled="true"
+             android:exported="true">

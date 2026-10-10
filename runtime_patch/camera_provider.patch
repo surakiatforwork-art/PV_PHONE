@@ -213,7 +213,7 @@
              if (activityInfo == null) {
                  VLog.e("VActivityManager", "Unable to resolve activityInfo : %s", intent);
                  if (intent.getPackage() != null && isAppPkg(intent.getPackage())) {
-@@ -547,6 +554,68 @@
+@@ -547,6 +554,56 @@
  
              }
              return false;
@@ -257,20 +257,8 @@
 +                    VLog.i("PHANToM.Camera", "Routing capture intent to declared handler "
 +                            + intent.getComponent());
 +                } else {
-+                    Intent launcher = pm.getLaunchIntentForPackage(selected);
-+                    if (launcher == null || launcher.getComponent() == null) {
-+                        context.getSharedPreferences("phantom_settings", Context.MODE_PRIVATE)
-+                                .edit().remove("camera_package").apply();
-+                        try {
-+                            new File(context.getFilesDir(), "phantom_camera_provider.txt").delete();
-+                        } catch (Throwable ignored) {
-+                        }
-+                        VLog.w("PHANToM.Camera", "Selected camera has no launchable activity: " + selected);
-+                        return;
-+                    }
-+                    intent.setComponent(launcher.getComponent());
-+                    VLog.i("PHANToM.Camera", "Routing capture intent via launcher fallback "
-+                            + launcher.getComponent());
++                    VLog.w("PHANToM.Camera", "Provider does not support capture: " + selected);
++                    return; // Use system capture handler, never a launcher without results.
 +                }
 +
 +                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION

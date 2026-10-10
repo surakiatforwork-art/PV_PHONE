@@ -1,6 +1,7 @@
 package com.lody.virtual.helper.utils;
 
 import android.content.Context;
+import android.system.Os;
 
 import com.lody.virtual.client.core.VirtualCore;
 
@@ -99,16 +100,16 @@ public final class GuestPermissionPolicy {
         try (FileOutputStream output = new FileOutputStream(temp)) {
             properties.store(output, "PHANToM VPhone guest permission policy");
             output.flush();
+            output.getFD().sync();
         } catch (Throwable e) {
             temp.delete();
             return false;
         }
 
-        if (file.exists() && !file.delete()) {
-            temp.delete();
-            return false;
-        }
-        if (!temp.renameTo(file)) {
+        try {
+            // Atomic replacement: concurrent readers see the old or new policy.
+            Os.rename(temp.getAbsolutePath(), file.getAbsolutePath());
+        } catch (Exception e) {
             temp.delete();
             return false;
         }

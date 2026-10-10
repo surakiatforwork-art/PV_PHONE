@@ -192,8 +192,11 @@ public class GuestPermissionSettingsActivity extends AppCompatActivity {
                     int mode = which == 1 ? GuestPermissionPolicy.MODE_ALLOW
                             : which == 2 ? GuestPermissionPolicy.MODE_DENY
                             : GuestPermissionPolicy.MODE_DEFAULT;
-                    GuestPermissionPolicy.setMode(
-                            guestPackage, guestUserId, row.permission, mode);
+                    if (!GuestPermissionPolicy.setMode(
+                            guestPackage, guestUserId, row.permission, mode)) {
+                        Toast.makeText(this, "Unable to save permission policy", Toast.LENGTH_LONG).show();
+                        return;
+                    }
                     dialog.dismiss();
 
                     if (mode == GuestPermissionPolicy.MODE_ALLOW) {

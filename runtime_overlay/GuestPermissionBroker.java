@@ -54,7 +54,7 @@ final class GuestPermissionBroker {
     private GuestPermissionBroker() {
     }
 
-    static Plan buildPlan(Activity activity, String guestPackage,
+    static Plan buildPlan(Activity activity, String guestPackage, int userId,
                           boolean runtimeAlreadyAttempted,
                           Set<String> attemptedSpecial) {
         Plan plan = new Plan();
@@ -65,7 +65,7 @@ final class GuestPermissionBroker {
         PackageInfo guestInfo;
         try {
             guestInfo = VPackageManager.get().getPackageInfo(
-                    guestPackage, PackageManager.GET_PERMISSIONS, 0);
+                    guestPackage, PackageManager.GET_PERMISSIONS, userId);
         } catch (Throwable e) {
             Log.w(TAG, "Unable to inspect guest permissions: " + guestPackage, e);
             return plan;
@@ -82,12 +82,16 @@ final class GuestPermissionBroker {
             Set<String> hostDeclared = getHostDeclaredPermissions(activity);
             LinkedHashSet<String> missing = new LinkedHashSet<>();
             for (String permission : requested) {
-                if (TextUtils.isEmpty(permission) || isSpecialPermission(permission)) {
+                if (TextUtils.isEmpty(permission) || isSpecialPermission(permission)
+                        || com.lody.virtual.helper.utils.GuestPermissionPolicy.isDenied(guestPackage, userId, permission)) {
                     continue;
                 }
                 if (!hostDeclared.contains(permission)) {
                     Log.i(TAG, "Guest requested permission not declared by host: " + permission);
                     continue;
+                }
+                if (Build.VERSION.SDK_INT >= 30 && Manifest.permission.ACCESS_BACKGROUND_LOCATION.equals(permission)) {
+                    continue; // Background location requires separate Settings approval.
                 }
                 if (!isDangerousPermission(activity, permission)) {
                     continue;
@@ -101,6 +105,23 @@ final class GuestPermissionBroker {
             if (!plan.runtimePermissions.isEmpty()) {
                 return plan;
             }
+        }
+
+        if (Build.VERSION.SDK_INT >= 30
+                && requestedSet.contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                && !com.lody.virtual.helper.utils.GuestPermissionPolicy.isDenied(
+                        guestPackage, userId, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                && activity.checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED
+                && (activity.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                        == PackageManager.PERMISSION_GRANTED
+                    || activity.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+                        == PackageManager.PERMISSION_GRANTED)
+                && !attemptedSpecial.contains("background_location")) {
+            plan.specialKey = "background_location";
+            plan.specialIntent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.parse("package:" + activity.getPackageName()));
+            return plan;
         }
 
         boolean needsBroadStorage = requestedSet.contains(Manifest.permission.MANAGE_EXTERNAL_STORAGE)
@@ -167,6 +188,9 @@ final class GuestPermissionBroker {
     }
 
     static String describeSpecial(String key) {
+        if ("background_location".equals(key)) {
+            return "Open Permissions > Location > Allow all the time if background location is needed.";
+        }
         if (SPECIAL_ALL_FILES.equals(key)) {
             return "แอปนี้ต้องการสิทธิ์จัดการไฟล์ทั้งหมด ระบบจะเปิดหน้า All files access ของ PHANToM VPhone";
         }

@@ -154,6 +154,7 @@ public class LoadingActivity extends VActivity {
             GuestPermissionBroker.Plan plan = GuestPermissionBroker.buildPlan(
                     this,
                     appModel.packageName,
+                    userId,
                     runtimePermissionsAttempted,
                     attemptedSpecialPermissions);
 
