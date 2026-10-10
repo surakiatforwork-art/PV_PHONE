@@ -48,6 +48,19 @@ jobs:
           patch -p1 < ../runtime_patch/camera_provider.patch
           patch -p1 < ../runtime_patch/permission_broker_xposed.patch
           patch -p1 < ../runtime_patch/guest_permission_settings.patch
+
+          # Android 10-16 activity/browser compatibility layers that must not
+          # be dropped when CI fetches a clean upstream VirtualApp tree.
+          cp ../runtime_patch/mirror/android/app/ActivityTaskManager.java             lib/src/main/java/mirror/android/app/ActivityTaskManager.java
+          cp ../runtime_patch/mirror/android/app/InstrumentationActivity.java             lib/src/main/java/mirror/android/app/InstrumentationActivity.java
+          cp ../runtime_patch/mirror/android/app/InstrumentationString.java             lib/src/main/java/mirror/android/app/InstrumentationString.java
+          cp ../runtime_patch/mirror/android/app/InstrumentationUser.java             lib/src/main/java/mirror/android/app/InstrumentationUser.java
+          mkdir -p lib/src/main/java/com/lody/virtual/client/hook/proxies/role
+          cp ../runtime_patch/com/lody/virtual/client/hook/proxies/role/RoleManagerStub.java             lib/src/main/java/com/lody/virtual/client/hook/proxies/role/RoleManagerStub.java
+
+          patch -p1 < ../runtime_patch/activity_task_manager_injection.patch
+          patch -p1 < ../runtime_patch/app_instrumentation_start_activity.patch
+          patch -p1 < ../runtime_patch/role_manager_invocation.patch
           cd ..
           cp runtime_overlay/BaseVirtualInitializer.java             runtime/app/src/main/java/io/virtualapp/delegate/BaseVirtualInitializer.java
           cp runtime_overlay/GmsSupport.java             runtime/lib/src/main/java/com/lody/virtual/GmsSupport.java
@@ -57,12 +70,19 @@ jobs:
           cp runtime_overlay/HomeAppAdapter.java             runtime/app/src/main/java/io/virtualapp/home/adapters/HomeAppAdapter.java
           cp -r runtime_overlay/res/* runtime/app/src/main/res/
 
+      - name: Assert browser/activity compatibility hooks
+        run: |
+          grep -q 'IActivityTaskManagerSingleton' runtime/lib/src/main/java/com/lody/virtual/client/hook/proxies/am/ActivityTaskManagerStub.java
+          grep -q 'execStartActivity virtualized' runtime/lib/src/main/java/com/lody/virtual/client/hook/delegate/AppInstrumentation.java
+          grep -q 'new RoleManagerStub' runtime/lib/src/main/java/com/lody/virtual/client/core/InvocationStubManager.java
+          grep -q 'InstrumentationActivity' runtime/lib/src/main/java/mirror/android/app/InstrumentationActivity.java
+
       - name: Rebrand PHANToM VPhone
         working-directory: runtime
         run: |
           sed -i 's/applicationId "io.va.exposed64"/applicationId "com.phantom.vphone"/' app/build.gradle
-          sed -i 's/versionCode 1/versionCode 62/' app/build.gradle
-          sed -i 's/versionName "1.0.0"/versionName "0.4.3-alpha"/' app/build.gradle
+          sed -i 's/versionCode 1/versionCode 63/' app/build.gradle
+          sed -i 's/versionName "1.0.0"/versionName "0.4.4-alpha"/' app/build.gradle
           sed -i 's#<string name="app_name">VirtualApp</string>#<string name="app_name">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
           sed -i 's#<string name="vxp">VirtualApp</string>#<string name="vxp">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
           sed -i 's/VirtualApp-${variant.versionName}-${abi}.apk/PHANToM-VPhone-${variant.versionName}-${abi}.apk/' app/build.gradle
@@ -116,13 +136,13 @@ jobs:
       - name: Upload arm64 APK
         uses: actions/upload-artifact@v4
         with:
-          name: PHANToM-VPhone-v0.4.3-alpha-arm64
+          name: PHANToM-VPhone-v0.4.4-alpha-arm64
           path: runtime/app/build/outputs/apk/debug/*-arm64-v8a.apk
           retention-days: 14
 
       - name: Upload universal APK
         uses: actions/upload-artifact@v4
         with:
-          name: PHANToM-VPhone-v0.4.3-alpha-universal
+          name: PHANToM-VPhone-v0.4.4-alpha-universal
           path: runtime/app/build/outputs/apk/debug/*-universal.apk
           retention-days: 14
