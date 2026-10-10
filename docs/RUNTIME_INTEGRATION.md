@@ -1,22 +1,21 @@
-# PHANToM VPhone runtime integration — Android 15
+# Runtime integration
 
-Status: ENGINE EVALUATION; not integrated. No claim of virtual installation or guest launch.
+Runtime: ISEKHON/VirtualApp, pinned to b3c634ad7941765df3da84a207aca94b7861afae.
+Source: https://github.com/ISEKHON/VirtualApp/tree/b3c634ad7941765df3da84a207aca94b7861afae
 
-## Candidate
-ISEKHON/VirtualApp, Apache-2.0, downloaded as source ZIP into runtime_research/VirtualApp-main (no Git). Repository: https://github.com/ISEKHON/VirtualApp
+Release 0.4.5 is built from the pinned source plus runtime_patch and runtime_overlay.
+The release workflow uses JDK 17, NDK 21.4.7075529, the upstream Gradle wrapper,
+and the existing PHANTOM_ALPHA signing secrets. It produces signed release variants.
+The root `app` module remains a separate legacy scaffold.
 
-## Validation gates
-1. Build the upstream app and lib on JDK 17 / Android SDK.
-2. Install the upstream test APK on Infinix Note 50 Pro Plus Android 15, check process and SELinux errors.
-3. Import a simple unmodified test APK, install via VirtualCore, launch and restart it.
-4. Verify split APK support, host app visibility, and guest user data isolation.
-5. Embed runtime into PHANToM VPhone only after gate 3 passes; migrate existing imported_packages into runtime install requests.
-6. Add camera intent redirection after guest launch is stable.
+Confirmed gates: signed build; update on Android 16; disposable guest installation
+and launch; modern permission checks; virtual Deny/Default; thumbnail and output-URI
+capture callbacks. Universal APK smoke testing was performed on the same arm64 device.
 
-## Constraints
-- No root, no modifying or re-signing guest APK.
-- No identity spoofing or bypassing integrity/attestation.
-- Android 15 hidden API and native hooks are not guaranteed on Transsion ROM.
-- Existing v0.3.0 imported APKs are storage copies, NOT installed virtual apps.
-- Never expose a Launch button unless engine reports installed state and launch intent.
-- Keep runtime candidate separate from shipped APK until validated.
+Not confirmed: physical multi-user execution; other devices/ABIs; browser isolation;
+Google Play/GMS sign-in; full guest compatibility. See COMPATIBILITY.md.
+
+Local regression: `python tests/test_permission_policy.py`.
+Disposable device probe: `python tests/android/build_probe.py <outside-repo-output-dir>`.
+The probe requires SDK platform android-34, build-tools 36.1.0, JDK 17 and a debug
+keystore. Import/launch it as a guest and verify its permission/capture result text.

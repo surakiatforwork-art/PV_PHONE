@@ -86,3 +86,14 @@ The embedded VirtualApp Xposed runtime is disabled in PHANToM VPhone and the Xpo
 controls are removed from Settings. This only affects the embedded runtime inside
 PHANToM VPhone. It does not enable, disable, patch or modify Xposed/LSPosed/Magisk or
 any normal application installed outside PHANToM VPhone.
+
+## 0.4.5 implementation updates
+
+On Android 11+, background location is excluded from the foreground runtime request.
+After foreground location is granted, the broker can open host app settings for
+separate background-location approval. Package checks use modern PermissionManager
+hooks on Android 12+, and Android 16 device-aware self checks use ActivityManager.
+Virtual Deny is excluded from automatic dangerous-permission requests.
+
+Policy writes fsync the temporary file and atomically rename it over the old file.
+A failed rename leaves the previous policy intact, and the settings UI reports failure.
