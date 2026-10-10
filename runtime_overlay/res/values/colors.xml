@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#20242C</color>
+    <color name="colorPrimaryDark">#171A20</color>
+    <color name="colorPrimaryRavel">#20242C</color>
+    <color name="colorAccent">#6F7BF7</color>
+    <color name="mainTextColor">#212121</color>
+
+    <color name="primary">#20242C</color>
+    <color name="primary_dark">#171A20</color>
+    <color name="primary_light">#343A46</color>
+    <color name="accent">#ffffff</color>
+    <color name="primary_text">#212121</color>
+    <color name="secondary_text">#757575</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <color name="desktopColorA">#2C3B4E</color>
+    <color name="desktopColorB">#314155</color>
+    <color name="desktopColorC">#324257</color>
+    <color name="desktopColorD">#2a3646</color>
+    <color name="desktopColorE">#11000000</color>
+
+    <color name="holo_blue_dark">#33cccc</color>
+    <color name="holo_yellow_dark">#ff9640</color>
+    <color name="holo_green_dark">#67e667</color>
+    <color name="holo_purple_dark">#df38b1</color>
+    <color name="holo_red_dark">#ff4040</color>
+
+    <integer-array name="progress_colors">
+        <item>@color/holo_blue_dark</item>
+        <item>@color/holo_yellow_dark</item>
+        <item>@color/holo_green_dark</item>
+        <item>@color/holo_purple_dark</item>
+        <item>@color/holo_red_dark</item>
+    </integer-array>
+
+    <color name="transparent">#00000000</color>
+    <color name="black_20_transparent">#55000000</color>
+
+    <color name="md_transparent">#00FFFFFF</color>
+
+
+    <color name="phantom_bg">#F5F7FA</color>
+    <color name="phantom_surface">#FFFFFFFF</color>
+    <color name="phantom_text">#1C2028</color>
+    <color name="phantom_text_secondary">#7A8494</color>
+    <color name="phantom_border">#E7EAF0</color>
+    <color name="phantom_pressed">#F0F2F6</color>
+    <color name="phantom_chip">#E9EDF4</color>
+    <color name="phantom_accent">#6F7BF7</color>
+    <color name="phantom_accent_soft">#EEF0FF</color>
+    <color name="phantom_accent_border">#DDE1FF</color>
+    <color name="phantom_mint_soft">#EAF7F2</color>
+    <color name="phantom_mint_border">#D5ECE4</color>
+
+</resources>
