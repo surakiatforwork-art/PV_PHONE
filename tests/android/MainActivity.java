@@ -21,6 +21,8 @@ public class MainActivity extends Activity {
   storage.setOnClickListener(v->testStorage());
   Button thumb=new Button(this);thumb.setText("Capture thumbnail");root.addView(thumb);
   Button output=new Button(this);output.setText("Capture output URI");root.addView(output);
+  Button external=new Button(this);external.setText("Capture external cache URI");root.addView(external);
+  external.setOnClickListener(v->captureExternal());
   thumb.setOnClickListener(v->capture(false));output.setOnClickListener(v->capture(true));
   Button channels=new Button(this);channels.setText("Test notification channels");root.addView(channels);
   channels.setOnClickListener(v->testChannels());
@@ -141,10 +143,24 @@ public class MainActivity extends Activity {
    startActivityForResult(i,output?7002:7001);
   }catch(Throwable e){status.setText("FAIL: "+e);}
  }
+ void captureExternal() {
+  try {
+   File directory=new File(getExternalCacheDir(),"browser-uploads");
+   if(!directory.isDirectory()&&!directory.mkdirs())throw new java.io.IOException("Cannot create external cache");
+   File previous=new File(directory,"capture.jpg");
+   if(previous.exists()&&!previous.delete())throw new java.io.IOException("Cannot remove prior external probe capture");
+   Intent i=new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+   Uri uri=Uri.parse("content://"+getPackageName()+".capture/external");
+   i.putExtra(MediaStore.EXTRA_OUTPUT,uri);
+   i.setClipData(ClipData.newRawUri("capture",uri));
+   i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+   startActivityForResult(i,1390560349);
+  }catch(Throwable e){status.setText("EXTERNAL CAPTURE FAIL: "+e);}
+ }
  protected void onActivityResult(int request,int result,Intent data){
   super.onActivityResult(request,result,data);
   boolean thumb=data!=null&&data.getParcelableExtra("data")!=null;
-  long size=new File(getFilesDir(),"capture.jpg").length();
+  long size=(request==1390560349?new File(getExternalCacheDir(),"browser-uploads/capture.jpg"):new File(getFilesDir(),"capture.jpg")).length();
   status.setText("request="+request+" result="+result+" thumbnail="+thumb+" outputBytes="+size);
  }
 }

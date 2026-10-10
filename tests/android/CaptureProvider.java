@@ -12,6 +12,8 @@ public class CaptureProvider extends ContentProvider {
  public int update(Uri u,ContentValues v,String s,String[] a){return 0;}
  public int delete(Uri u,String s,String[] a){return 0;}
  public ParcelFileDescriptor openFile(Uri u,String mode)throws FileNotFoundException{
-  return ParcelFileDescriptor.open(new File(getContext().getFilesDir(),"capture.jpg"),ParcelFileDescriptor.parseMode(mode));
+  File target=("external".equals(u.getLastPathSegment())?new File(getContext().getExternalCacheDir(),"browser-uploads/capture.jpg"):new File(getContext().getFilesDir(),"capture.jpg"));
+  android.util.Log.i("PHANToM.Capture","fixture target="+target+" parentExists="+target.getParentFile().isDirectory());
+  return ParcelFileDescriptor.open(target,ParcelFileDescriptor.parseMode(mode));
  }
 }

@@ -1,0 +1,89 @@
+--- a/lib/src/main/jni/Foundation/IOUniformer.cpp
++++ b/lib/src/main/jni/Foundation/IOUniformer.cpp
+@@ -3,6 +3,8 @@
+ //
+ #include <unistd.h>
+ #include <stdlib.h>
++#include <stdarg.h>
++#include <errno.h>
+ #include <fb/include/fb/ALog.h>
+ 
+ #ifdef __aarch64__
+@@ -159,6 +161,69 @@
+ }
+ 
+ 
++// ParcelFileDescriptor and native browser IO use these public libc entry points.
++// Keep Android's original wrappers (including large-file and fortify behavior).
++static bool open_needs_mode(int flags) {
++    if (flags & O_CREAT) return true;
++#ifdef O_TMPFILE
++    if ((flags & O_TMPFILE) == O_TMPFILE) return true;
++#endif
++    return false;
++}
++
++#define DEFINE_OPEN_REDIRECT(name) \
++HOOK_DEF(int, name, const char *pathname, int flags, ...) { \
++    mode_t mode = 0; \
++    if (open_needs_mode(flags)) { \
++        va_list args; va_start(args, flags); mode = va_arg(args, int); va_end(args); \
++    } \
++    int res; \
++    const char *mapped = relocate_path(pathname, &res); \
++    if (res == FORBID) { FREE(mapped, pathname); errno = EACCES; return -1; } \
++    int result = orig_##name(mapped, flags, mode); \
++    int saved_errno = errno; FREE(mapped, pathname); errno = saved_errno; \
++    return result; \
++}
++
++#define DEFINE_OPENAT_REDIRECT(name) \
++HOOK_DEF(int, name, int dirfd, const char *pathname, int flags, ...) { \
++    mode_t mode = 0; \
++    if (open_needs_mode(flags)) { \
++        va_list args; va_start(args, flags); mode = va_arg(args, int); va_end(args); \
++    } \
++    int res; \
++    const char *mapped = relocate_path(pathname, &res); \
++    if (res == FORBID) { FREE(mapped, pathname); errno = EACCES; return -1; } \
++    int result = orig_##name(dirfd, mapped, flags, mode); \
++    int saved_errno = errno; FREE(mapped, pathname); errno = saved_errno; \
++    return result; \
++}
++
++DEFINE_OPEN_REDIRECT(open)
++DEFINE_OPEN_REDIRECT(open64)
++DEFINE_OPENAT_REDIRECT(openat)
++DEFINE_OPENAT_REDIRECT(openat64)
++
++static void hook_open_symbols(void *handle) {
++    const char *names[] = {"open", "open64", "openat", "openat64"};
++    void *replacements[] = {(void *) new_open, (void *) new_open64,
++                            (void *) new_openat, (void *) new_openat64};
++    void **originals[] = {(void **) &orig_open, (void **) &orig_open64,
++                         (void **) &orig_openat, (void **) &orig_openat64};
++    void *seen[4] = {nullptr, nullptr, nullptr, nullptr};
++    int count = 0;
++    for (int i = 0; i < 4; ++i) {
++        void *address = dlsym(handle, names[i]);
++        if (address == nullptr) continue;
++        bool alias = false;
++        for (int j = 0; j < count; ++j) if (seen[j] == address) alias = true;
++        if (alias) continue; // Bionic open64/openat64 can alias their non-64 names.
++        seen[count++] = address;
++        hook_function(address, replacements[i], originals[i]);
++        ALOGI("PHANToM IO %s redirect installed=%d", names[i], *originals[i] != nullptr);
++    }
++}
++
+ // int fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags);
+ HOOK_DEF(int, fchownat, int dirfd, const char *pathname, uid_t owner, gid_t group, int flags) {
+     int res;
+@@ -520,6 +585,7 @@
+ 
+     void *handle = dlopen("libc.so", RTLD_NOW);
+     if (handle) {
++        hook_open_symbols(handle);
+         HOOK_SYMBOL(handle, fchownat);
+         HOOK_SYMBOL(handle, renameat);
+         HOOK_SYMBOL(handle, fstatat64);
