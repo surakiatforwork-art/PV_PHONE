@@ -37,3 +37,10 @@ tested Android 16 device with Timestamp Camera and the system camera. See the
 Development code 75 fixes the observed Google Maps guest startup crashes on the
 tested Android 16 device. Maps opens, searches and loads map/place content; Google
 account login and navigation remain unverified. See [Maps validation](docs/MAPS_GUEST_STARTUP_FIX.md).
+
+Development code 79 adds shared modern location and Wi-Fi service boundaries.
+Two unrelated guest packages receive live device GPS; Maps shows current location
+without the earlier stale warning, but still reports low accuracy. Coarse-only
+guests are blocked when the host has precise permission pending a filtered bridge.
+See [shared permission validation and limitations](docs/SHARED_GUEST_PERMISSION_LOCATION.md).
+The same package-independent rules apply to future fixes through AGENTS.md and CI.

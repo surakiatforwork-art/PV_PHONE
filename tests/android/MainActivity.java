@@ -64,6 +64,7 @@ public class MainActivity extends Activity {
   }catch(Throwable e){status.setText("LOCATION FAIL: "+e);}
  }
  protected void onDestroy(){if(locationManager!=null&&locationListener!=null)locationManager.removeUpdates(locationListener);super.onDestroy();}
+ protected void onPause(){if(locationManager!=null&&locationListener!=null){locationManager.removeUpdates(locationListener);locationListener=null;}super.onPause();}
  void testStorage() {
   try {
    if(android.os.Build.VERSION.SDK_INT>=30&&!android.os.Environment.isExternalStorageManager())throw new AssertionError("All files access query disagrees with host grant");
