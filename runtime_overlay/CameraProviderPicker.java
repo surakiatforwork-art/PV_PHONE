@@ -36,13 +36,15 @@ final class CameraProviderPicker {
         final String label;
         final String packageName;
         final Drawable icon;
-        final boolean captureHandler;
+        final boolean photo;
+        final boolean video;
 
-        Entry(String label, String packageName, Drawable icon, boolean captureHandler) {
+        Entry(String label, String packageName, Drawable icon, boolean photo, boolean video) {
             this.label = label;
             this.packageName = packageName;
             this.icon = icon;
-            this.captureHandler = captureHandler;
+            this.photo = photo;
+            this.video = video;
         }
     }
 
@@ -62,14 +64,13 @@ final class CameraProviderPicker {
             try {
                 CharSequence label = pm.getApplicationLabel(ai);
                 unique.put(pkg, new Entry(label == null ? pkg : label.toString(),
-                        pkg, pm.getApplicationIcon(ai), true));
+                        pkg, pm.getApplicationIcon(ai), photo, video));
             } catch (Throwable ignored) {
             }
         }
 
         List<Entry> all = new ArrayList<>(unique.values());
         Collections.sort(all, (a, b) -> {
-            if (a.captureHandler != b.captureHandler) return a.captureHandler ? -1 : 1;
             return a.label.compareToIgnoreCase(b.label);
         });
 
@@ -77,7 +78,7 @@ final class CameraProviderPicker {
                 "System default",
                 "",
                 activity.getDrawable(android.R.drawable.ic_menu_camera),
-                true);
+                true, true);
         all.add(0, system);
 
         LinearLayout content = new LinearLayout(activity);
@@ -129,7 +130,8 @@ final class CameraProviderPicker {
                 if (entry.packageName.isEmpty()) {
                     pkg.setText("Use Android default camera");
                 } else {
-                    String state = "Capture intent supported";
+                    String state = entry.photo && entry.video ? "Photo and video capture"
+                            : entry.photo ? "Photo capture" : "Video capture only";
                     pkg.setText(entry.packageName + "  •  " + state);
                 }
                 pkg.setTextSize(12);
