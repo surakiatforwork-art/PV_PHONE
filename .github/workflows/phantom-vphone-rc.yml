@@ -69,6 +69,7 @@ jobs:
           mkdir -p lib/src/main/java/com/lody/virtual/client/hook/proxies/permission
           cp ../runtime_overlay/PermissionManagerStub.java lib/src/main/java/com/lody/virtual/client/hook/proxies/permission/PermissionManagerStub.java
           cp ../runtime_overlay/CaptureBridgeProvider.java lib/src/main/java/com/lody/virtual/client/stub/CaptureBridgeProvider.java
+          cp ../runtime_overlay/ConnectivityStub.java lib/src/main/java/com/lody/virtual/client/hook/proxies/connectivity/ConnectivityStub.java
           patch -p1 < ../runtime_patch/modern_permission_capture_output.patch
           patch -p1 < ../runtime_patch/modern_broadcast.patch
           patch -p1 < ../runtime_patch/capture_host_and_device_permission.patch
@@ -122,7 +123,7 @@ jobs:
           field = "    buildConfigField 'String', 'DIAGNOSTICS_SOURCE', " + repr(json.dumps(os.environ["GITHUB_SHA"]))
           path.write_text(path.read_text().replace("defaultConfig {", "defaultConfig {\n" + field))
           PY
-          sed -i 's/versionCode 1/versionCode 71/' app/build.gradle
+          sed -i 's/versionCode 1/versionCode 72/' app/build.gradle
           sed -i 's/versionName "1.0.0"/versionName "0.4.9-dev"/' app/build.gradle
           sed -i 's#<string name="app_name">VirtualApp</string>#<string name="app_name">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
           sed -i 's#<string name="vxp">VirtualApp</string>#<string name="vxp">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
