@@ -53,13 +53,16 @@ jobs:
           cp runtime_overlay/GmsSupport.java             runtime/lib/src/main/java/com/lody/virtual/GmsSupport.java
           cp runtime_overlay/SettingsActivity.java             runtime/app/src/main/java/io/virtualapp/settings/SettingsActivity.java
           cp runtime_overlay/LoadingActivity.java             runtime/app/src/main/java/io/virtualapp/home/LoadingActivity.java
+          cp runtime_overlay/NewHomeActivity.java             runtime/app/src/main/java/io/virtualapp/home/NewHomeActivity.java
+          cp runtime_overlay/HomeAppAdapter.java             runtime/app/src/main/java/io/virtualapp/home/adapters/HomeAppAdapter.java
+          cp -r runtime_overlay/res/* runtime/app/src/main/res/
 
       - name: Rebrand PHANToM VPhone
         working-directory: runtime
         run: |
           sed -i 's/applicationId "io.va.exposed64"/applicationId "com.phantom.vphone"/' app/build.gradle
-          sed -i 's/versionCode 1/versionCode 61/' app/build.gradle
-          sed -i 's/versionName "1.0.0"/versionName "0.4.2-alpha"/' app/build.gradle
+          sed -i 's/versionCode 1/versionCode 62/' app/build.gradle
+          sed -i 's/versionName "1.0.0"/versionName "0.4.3-alpha"/' app/build.gradle
           sed -i 's#<string name="app_name">VirtualApp</string>#<string name="app_name">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
           sed -i 's#<string name="vxp">VirtualApp</string>#<string name="vxp">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
           sed -i 's/VirtualApp-${variant.versionName}-${abi}.apk/PHANToM-VPhone-${variant.versionName}-${abi}.apk/' app/build.gradle
@@ -113,13 +116,13 @@ jobs:
       - name: Upload arm64 APK
         uses: actions/upload-artifact@v4
         with:
-          name: PHANToM-VPhone-v0.4.2-alpha-arm64
+          name: PHANToM-VPhone-v0.4.3-alpha-arm64
           path: runtime/app/build/outputs/apk/debug/*-arm64-v8a.apk
           retention-days: 14
 
       - name: Upload universal APK
         uses: actions/upload-artifact@v4
         with:
-          name: PHANToM-VPhone-v0.4.2-alpha-universal
+          name: PHANToM-VPhone-v0.4.3-alpha-universal
           path: runtime/app/build/outputs/apk/debug/*-universal.apk
           retention-days: 14
