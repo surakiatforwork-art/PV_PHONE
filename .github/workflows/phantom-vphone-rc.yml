@@ -1,4 +1,4 @@
-name: PHANToM VPhone RC
+name: PHANToM VPhone Release Candidate
 
 on:
   workflow_dispatch:
@@ -36,41 +36,84 @@ jobs:
           jar cf runtime/lib/android16-stubs.jar -C android16_stub_classes .
           sed -i "/dependencies {/a\    compileOnly files('android16-stubs.jar')" runtime/lib/build.gradle
 
-      - name: Apply PHANToM patches
+      - name: Apply PHANToM overlays and patches
         run: |
           cp runtime_overlay/CameraProviderPicker.java             runtime/app/src/main/java/io/virtualapp/home/CameraProviderPicker.java
           cp runtime_overlay/GuestPermissionBroker.java             runtime/app/src/main/java/io/virtualapp/home/GuestPermissionBroker.java
+          cp runtime_overlay/GuestPermissionSettingsActivity.java             runtime/app/src/main/java/io/virtualapp/settings/GuestPermissionSettingsActivity.java
+          cp runtime_overlay/GuestPermissionPolicy.java             runtime/lib/src/main/java/com/lody/virtual/helper/utils/GuestPermissionPolicy.java
           cd runtime
           patch -p1 < ../runtime_patch/android16_transaction_handler.patch
           patch -p1 < ../runtime_patch/camera_provider.patch
           patch -p1 < ../runtime_patch/permission_broker_xposed.patch
+          patch -p1 < ../runtime_patch/guest_permission_settings.patch
 
       - name: Rebrand PHANToM VPhone
         working-directory: runtime
         run: |
           sed -i 's/applicationId "io.va.exposed64"/applicationId "com.phantom.vphone"/' app/build.gradle
-          sed -i 's/versionCode 1/versionCode 53/' app/build.gradle
-          sed -i 's/versionName "1.0.0"/versionName "0.4.0-alpha-rc3"/' app/build.gradle
+          sed -i 's/versionCode 1/versionCode 60/' app/build.gradle
+          sed -i 's/versionName "1.0.0"/versionName "0.4.1-alpha"/' app/build.gradle
           sed -i 's#<string name="app_name">VirtualApp</string>#<string name="app_name">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
           sed -i 's#<string name="vxp">VirtualApp</string>#<string name="vxp">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
           sed -i 's/VirtualApp-${variant.versionName}-${abi}.apk/PHANToM-VPhone-${variant.versionName}-${abi}.apk/' app/build.gradle
 
+      - name: Configure stable alpha signing
+        env:
+          PHANTOM_KEYSTORE_BASE64: ${{ secrets.PHANTOM_ALPHA_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$PHANTOM_KEYSTORE_BASE64"
+          printf '%s' "$PHANTOM_KEYSTORE_BASE64" | base64 -d > "$GITHUB_WORKSPACE/phantom-alpha.jks"
+          cat >> runtime/app/build.gradle <<'EOF'
+
+          android {
+              signingConfigs {
+                  phantomAlpha {
+                      storeFile file(System.getenv("PHANTOM_KEYSTORE_PATH"))
+                      storePassword System.getenv("PHANTOM_STORE_PASSWORD")
+                      keyAlias System.getenv("PHANTOM_KEY_ALIAS")
+                      keyPassword System.getenv("PHANTOM_KEY_PASSWORD")
+                  }
+              }
+              buildTypes {
+                  debug {
+                      signingConfig signingConfigs.phantomAlpha
+                  }
+                  release {
+                      signingConfig signingConfigs.phantomAlpha
+                  }
+              }
+          }
+          EOF
+
       - name: Build APKs
         working-directory: runtime
+        env:
+          PHANTOM_KEYSTORE_PATH: ${{ github.workspace }}/phantom-alpha.jks
+          PHANTOM_STORE_PASSWORD: ${{ secrets.PHANTOM_ALPHA_STORE_PASSWORD }}
+          PHANTOM_KEY_ALIAS: ${{ secrets.PHANTOM_ALPHA_KEY_ALIAS }}
+          PHANTOM_KEY_PASSWORD: ${{ secrets.PHANTOM_ALPHA_KEY_PASSWORD }}
         run: |
           chmod +x gradlew
           ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
+      - name: Verify signing
+        env:
+          PHANTOM_KEYSTORE_PATH: ${{ github.workspace }}/phantom-alpha.jks
+        run: |
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose runtime/app/build/outputs/apk/debug/*-arm64-v8a.apk
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose runtime/app/build/outputs/apk/debug/*-universal.apk
+
       - name: Upload arm64 APK
         uses: actions/upload-artifact@v4
         with:
-          name: PHANToM-VPhone-v0.4.0-alpha-rc3-arm64
+          name: PHANToM-VPhone-v0.4.1-alpha-arm64
           path: runtime/app/build/outputs/apk/debug/*-arm64-v8a.apk
-          retention-days: 7
+          retention-days: 14
 
       - name: Upload universal APK
         uses: actions/upload-artifact@v4
         with:
-          name: PHANToM-VPhone-v0.4.0-alpha-rc3-universal
+          name: PHANToM-VPhone-v0.4.1-alpha-universal
           path: runtime/app/build/outputs/apk/debug/*-universal.apk
-          retention-days: 7
+          retention-days: 14
