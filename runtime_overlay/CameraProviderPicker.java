@@ -54,7 +54,6 @@ final class CameraProviderPicker {
         Set<String> capturePackages = new HashSet<>();
         collectCaptureHandlers(pm, new Intent(MediaStore.ACTION_IMAGE_CAPTURE), capturePackages);
         collectCaptureHandlers(pm, new Intent(MediaStore.ACTION_VIDEO_CAPTURE), capturePackages);
-        collectCaptureHandlers(pm, new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA), capturePackages);
 
         Map<String, Entry> unique = new LinkedHashMap<>();
         Intent launcherQuery = new Intent(Intent.ACTION_MAIN);
@@ -62,7 +61,8 @@ final class CameraProviderPicker {
         for (ResolveInfo info : pm.queryIntentActivities(launcherQuery, 0)) {
             if (info.activityInfo == null || info.activityInfo.packageName == null) continue;
             String pkg = info.activityInfo.packageName;
-            if (pkg.equals(activity.getPackageName()) || unique.containsKey(pkg)) continue;
+            if (pkg.equals(activity.getPackageName()) || unique.containsKey(pkg)
+                    || !capturePackages.contains(pkg)) continue;
             CharSequence label = info.loadLabel(pm);
             Drawable icon;
             try { icon = info.loadIcon(pm); }
@@ -151,7 +151,7 @@ final class CameraProviderPicker {
                 if (entry.packageName.isEmpty()) {
                     pkg.setText("Use Android default camera");
                 } else {
-                    String state = entry.captureHandler ? "Capture intent supported" : "Launcher fallback";
+                    String state = "Capture intent supported";
                     pkg.setText(entry.packageName + "  •  " + state);
                 }
                 pkg.setTextSize(12);

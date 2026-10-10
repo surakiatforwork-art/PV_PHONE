@@ -328,6 +328,12 @@ public class NewHomeActivity extends AppCompatActivity {
         Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
         if (!TextUtils.isEmpty(pkg)) {
             intent.setPackage(pkg);
+            if (getPackageManager().resolveActivity(intent,
+                    android.content.pm.PackageManager.MATCH_DEFAULT_ONLY) == null) {
+                intent.setPackage(null);
+                Toast.makeText(this, "Selected camera cannot capture; using system default.",
+                        Toast.LENGTH_LONG).show();
+            }
         }
         try {
             startActivityForResult(intent, 0x5048);
