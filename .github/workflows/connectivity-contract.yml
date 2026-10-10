@@ -1,9 +1,11 @@
-name: Guest connectivity UID contract
+name: Guest service permission contracts
 on:
   push:
     paths:
       - 'runtime_overlay/ConnectivityStub.java'
+      - 'runtime_overlay/GuestLocationHooks.java'
       - 'tests/test_connectivity_uid.py'
+      - 'tests/test_location_boundary.py'
       - '.github/workflows/connectivity-contract.yml'
   workflow_dispatch:
 jobs:
@@ -19,3 +21,4 @@ jobs:
         with:
           python-version: '3.11'
       - run: python tests/test_connectivity_uid.py -v
+      - run: python tests/test_location_boundary.py -v

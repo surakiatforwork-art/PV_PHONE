@@ -17,6 +17,8 @@ public class MainActivity extends Activity {
   super.onCreate(saved);
   LinearLayout root=new LinearLayout(this); root.setOrientation(1);
   status=new TextView(this); status.setTextSize(18); root.addView(status);
+  Button gps=new Button(this);gps.setText("Test device location");root.addView(gps);
+  gps.setOnClickListener(v->testLocation());
   Button storage=new Button(this);storage.setText("Test shared device files");root.addView(storage);
   storage.setOnClickListener(v->testStorage());
   Button thumb=new Button(this);thumb.setText("Capture thumbnail");root.addView(thumb);
@@ -41,6 +43,27 @@ public class MainActivity extends Activity {
   status.setText("CAMERA="+getPackageManager().checkPermission("android.permission.CAMERA",getPackageName())+" SELF="+checkSelfPermission("android.permission.CAMERA")+" UID="+android.os.Process.myUid());
   setContentView(root);
  }
+ android.location.LocationManager locationManager;
+ android.location.LocationListener locationListener;
+ void testLocation() {
+  try {
+   if(locationListener!=null)locationManager.removeUpdates(locationListener);
+   locationManager=getSystemService(android.location.LocationManager.class);
+   locationListener=new android.location.LocationListener(){public void onLocationChanged(android.location.Location location){
+    if(location.isMock()) {status.setText("LOCATION FAIL: mock fix");return;}
+    if(!location.hasAccuracy()||location.getAccuracy()<=0||Math.abs(location.getLatitude())>90||Math.abs(location.getLongitude())>180){status.setText("LOCATION FAIL: invalid fix");return;}
+    long age=(SystemClock.elapsedRealtimeNanos()-location.getElapsedRealtimeNanos())/1000000;
+    status.setText("LOCATION PASS callback provider="+location.getProvider()+" accuracy="+location.getAccuracy()+"m ageMs="+age+" package="+getPackageName());
+   }};
+   int requested=0;
+   for(String provider:new String[]{"gps","network"})if(locationManager.isProviderEnabled(provider)){
+    locationManager.requestLocationUpdates(provider,1000,0,locationListener);requested++;
+   }
+   if(requested==0)throw new AssertionError("No enabled device provider");
+   status.setText("LOCATION WAITING live callback providers="+requested+" package="+getPackageName());
+  }catch(Throwable e){status.setText("LOCATION FAIL: "+e);}
+ }
+ protected void onDestroy(){if(locationManager!=null&&locationListener!=null)locationManager.removeUpdates(locationListener);super.onDestroy();}
  void testStorage() {
   try {
    if(android.os.Build.VERSION.SDK_INT>=30&&!android.os.Environment.isExternalStorageManager())throw new AssertionError("All files access query disagrees with host grant");
