@@ -23,6 +23,21 @@ public class MainActivity extends Activity {
    java.lang.reflect.Method get=props.getDeclaredMethod("get",String.class);get.setAccessible(true);
    status.setText("PROFILE package="+getPackageName()+" MODEL="+Build.MODEL+" BRAND="+Build.BRAND+" MANUFACTURER="+Build.MANUFACTURER+" PRODUCT="+Build.PRODUCT+" DEVICE="+Build.DEVICE+" propModel="+get.invoke(null,"ro.product.model")+" propMarket="+get.invoke(null,"ro.product.vendor.marketname")+" SDK="+Build.VERSION.SDK_INT+" ABI="+Build.SUPPORTED_ABIS[0]);
   }catch(Throwable e){status.setText("PROFILE FAIL "+e);}});
+  Button directory=new Button(this);directory.setText("Test virtual directory");root.addView(directory);
+  directory.setOnClickListener(v->{
+   File dir=new File("/storage/emulated/0/Android/data/"+getPackageName()+"/cache/directory-probe-"+System.nanoTime());
+   File marker=new File(dir,"owned.txt");
+   try{
+    if(!dir.mkdirs())throw new AssertionError("mkdirs failed");
+    try(java.io.FileOutputStream out=new java.io.FileOutputStream(marker)){out.write(42);}
+    String[] names=dir.list();
+    if(names==null||!java.util.Arrays.asList(names).contains("owned.txt"))throw new AssertionError("virtual directory listing failed");
+    try(java.io.FileInputStream in=new java.io.FileInputStream(marker)){if(in.read()!=42)throw new AssertionError("read failed");}
+    if(!marker.delete()||!dir.delete())throw new AssertionError("cleanup failed");
+    status.setText("DIRECTORY PASS: create/write/list/read/delete package="+getPackageName());
+   }catch(Throwable e){status.setText("DIRECTORY FAIL "+e);}
+   finally{marker.delete();dir.delete();}
+  });
   Button gps=new Button(this);gps.setText("Test device location");root.addView(gps);
   gps.setOnClickListener(v->testLocation());
   Button storage=new Button(this);storage.setText("Test shared device files");root.addView(storage);

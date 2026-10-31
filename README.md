@@ -44,3 +44,9 @@ without the earlier stale warning, but still reports low accuracy. Coarse-only
 guests are blocked when the host has precise permission pending a filtered bridge.
 See [shared permission validation and limitations](docs/SHARED_GUEST_PERMISSION_LOCATION.md).
 The same package-independent rules apply to future fixes through AGENTS.md and CI.
+
+Development code 86 adds an experimental per-guest iQOO 13 (V2408A) metadata
+profile based on the supplied FPS module, plus shared shortcut-query, split-APK
+and directory-listing compatibility fixes. Probe guests read the changed model;
+Garena CODM 1.6.57 still terminates natively in the guest runtime. This does not
+unlock or certify 144 FPS gameplay. See [device-profile scope and validation](docs/GUEST_DEVICE_PROFILE.md).
