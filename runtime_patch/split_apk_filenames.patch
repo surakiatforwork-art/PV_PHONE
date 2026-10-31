@@ -1,6 +1,15 @@
 --- a/lib/src/main/java/com/lody/virtual/server/pm/VAppManagerService.java
 +++ b/lib/src/main/java/com/lody/virtual/server/pm/VAppManagerService.java
-@@ -256,7 +256,12 @@
+@@ -240,7 +240,7 @@
+             }
+             File baseApkFile = packageFile.isFile() ? packageFile : new File(pkg.baseCodePath);
+             try {
+-                FileUtils.copyFile(baseApkFile, privatePackageFile);
++                com.lody.virtual.helper.utils.GuestApkFiles.copy(baseApkFile, privatePackageFile);
+             } catch (IOException e) {
+                 privatePackageFile.delete();
+                 return InstallResult.makeFailure("Unable to copy the package file.");
+@@ -256,9 +256,14 @@
  
                  for (int i = 0; i < length; i++) {
                      String splitName = pkg.splitNames[i];
@@ -12,8 +21,21 @@
 +                    }
 +                    File privateSplitFile = new File(appDir, splitFileName);
                      try {
-                         FileUtils.copyFile(new File(pkg.splitCodePaths[i]), privateSplitFile);
+-                        FileUtils.copyFile(new File(pkg.splitCodePaths[i]), privateSplitFile);
++                        com.lody.virtual.helper.utils.GuestApkFiles.copy(new File(pkg.splitCodePaths[i]), privateSplitFile);
  
+                         // copy lib in split apk
+                         NativeLibraryHelperCompat.copyNativeBinaries(privateSplitFile, libDir);
+@@ -332,7 +337,8 @@
+                     return;
+                 }
+                 FileUtils.chmod(packageFile.getParentFile().getAbsolutePath(), FileUtils.FileMode.MODE_755);
+-                FileUtils.chmod(packageFile.getAbsolutePath(), FileUtils.FileMode.MODE_755);
++                FileUtils.chmod(packageFile.getAbsolutePath(),
++                        packageFile.getName().endsWith(".apk") ? 0444 : FileUtils.FileMode.MODE_755);
+             }
+         } catch (Exception e) {
+             e.printStackTrace();
 --- a/app/src/main/java/io/virtualapp/dev/CmdReceiver.java
 +++ b/app/src/main/java/io/virtualapp/dev/CmdReceiver.java
 @@ -192,11 +192,14 @@

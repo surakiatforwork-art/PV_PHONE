@@ -7,6 +7,9 @@ on:
       - 'runtime_patch/guest_device_profile.patch'
       - 'runtime_overlay/GuestShortcutQuery.java'
       - 'runtime_patch/modern_shortcut_query.patch'
+      - 'runtime_overlay/GuestApkFiles.java'
+      - 'runtime_patch/split_apk_filenames.patch'
+      - 'tests/test_guest_apk_files.py'
       - 'tests/test_shortcut_query.py'
       - 'tests/test_device_profile.py'
       - 'tests/test_device_properties.py'
@@ -27,3 +30,4 @@ jobs:
       - run: python tests/test_device_profile.py -v
       - run: python tests/test_device_properties.py -v
       - run: python tests/test_shortcut_query.py -v
+      - run: python tests/test_guest_apk_files.py -v
