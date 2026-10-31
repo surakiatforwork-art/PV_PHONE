@@ -5,6 +5,9 @@ on:
       - 'runtime_overlay/GuestDeviceProfile.java'
       - 'runtime_overlay/GuestDeviceProperties.h'
       - 'runtime_patch/guest_device_profile.patch'
+      - 'runtime_overlay/GuestShortcutQuery.java'
+      - 'runtime_patch/modern_shortcut_query.patch'
+      - 'tests/test_shortcut_query.py'
       - 'tests/test_device_profile.py'
       - 'tests/test_device_properties.py'
       - '.github/workflows/device-profile-contract.yml'
@@ -23,3 +26,4 @@ jobs:
           python-version: '3.11'
       - run: python tests/test_device_profile.py -v
       - run: python tests/test_device_properties.py -v
+      - run: python tests/test_shortcut_query.py -v

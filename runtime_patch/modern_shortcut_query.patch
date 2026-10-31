@@ -1,0 +1,6 @@
+--- a/lib/src/main/java/com/lody/virtual/client/hook/proxies/shortcut/ShortcutServiceStub.java
++++ b/lib/src/main/java/com/lody/virtual/client/hook/proxies/shortcut/ShortcutServiceStub.java
+@@ -38,2 +38,3 @@
+         super.onBindMethods();
++        addMethodProxy(new GuestShortcutQuery());
+         addMethodProxy(new ReplaceCallingPkgMethodProxy("getManifestShortcuts"));
