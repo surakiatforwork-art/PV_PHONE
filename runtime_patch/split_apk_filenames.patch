@@ -1,0 +1,16 @@
+--- a/lib/src/main/java/com/lody/virtual/server/pm/VAppManagerService.java
++++ b/lib/src/main/java/com/lody/virtual/server/pm/VAppManagerService.java
+@@ -256,7 +256,12 @@
+ 
+                 for (int i = 0; i < length; i++) {
+                     String splitName = pkg.splitNames[i];
+-                    File privateSplitFile = new File(appDir, splitName + ".apk");
++                    // Asset-pack runtimes also resolve the original split basenames.
++                    String splitFileName = new File(pkg.splitCodePaths[i]).getName();
++                    if ("base.apk".equals(splitFileName) || !splitFileName.endsWith(".apk")) {
++                        return InstallResult.makeFailure("Invalid split filename: " + splitName);
++                    }
++                    File privateSplitFile = new File(appDir, splitFileName);
+                     try {
+                         FileUtils.copyFile(new File(pkg.splitCodePaths[i]), privateSplitFile);
+ 
