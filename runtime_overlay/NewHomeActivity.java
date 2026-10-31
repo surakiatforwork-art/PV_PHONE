@@ -168,7 +168,7 @@ public class NewHomeActivity extends AppCompatActivity {
         java.io.File root = getFilesDir();
         String current = com.lody.virtual.helper.utils.GuestDeviceProfile.get(root, pkg, user);
         new AlertDialog.Builder(this).setTitle("Device profile: " + pkg)
-                .setSingleChoiceItems(new String[]{"Device default", "iQOO 13 (V2408A)"},
+                .setSingleChoiceItems(new String[]{"Device default", "iQOO 13 (V2408A, experimental)"},
                         "iqoo13".equals(current) ? 1 : 0, (dialog, which) -> {
                             String selected = which == 1 ? "iqoo13" : "default";
                             if (com.lody.virtual.helper.utils.GuestDeviceProfile.set(root, pkg, user, selected)) {
