@@ -14,3 +14,22 @@
                      try {
                          FileUtils.copyFile(new File(pkg.splitCodePaths[i]), privateSplitFile);
  
+--- a/app/src/main/java/io/virtualapp/dev/CmdReceiver.java
++++ b/app/src/main/java/io/virtualapp/dev/CmdReceiver.java
+@@ -192,11 +192,14 @@
+         }
+         try {
+             ApplicationInfo hostInfo = context.getPackageManager().getApplicationInfo(pkg, 0);
++            String installPath = hostInfo.sourceDir;
++            if (hostInfo.splitSourceDirs != null && hostInfo.splitSourceDirs.length > 0) {
++                installPath = new java.io.File(hostInfo.sourceDir).getParent();
++            }
+             InstallResult result = VirtualCore.get().installPackage(
+-                    hostInfo.sourceDir,
++                    installPath,
+                     InstallStrategy.UPDATE_IF_EXIST | InstallStrategy.SKIP_DEX_OPT);
+             if (result.isSuccess) {
+-                installSplitApks(context, pkg);
+                 report(context, "UPDATED: " + pkg);
+             } else {
+                 report(context, "UPDATE_FAILED: " + pkg + " error=" + result.error);
