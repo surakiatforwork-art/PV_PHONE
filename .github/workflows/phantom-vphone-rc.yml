@@ -59,6 +59,7 @@ jobs:
           patch -p1 < ../runtime_patch/guest_device_profile.patch
           patch -p1 < ../runtime_patch/modern_shortcut_query.patch
           patch -p1 < ../runtime_patch/split_apk_filenames.patch
+          patch -p1 < ../runtime_patch/guest_native_pointer_compat.patch
           patch -p1 < ../runtime_patch/shared_device_storage.patch
           patch -p1 < ../runtime_patch/short_native_hook_guard.patch
           patch -p1 < ../runtime_patch/native_open_redirect.patch
@@ -122,6 +123,7 @@ jobs:
           import xml.etree.ElementTree as ET
           root = ET.parse("runtime/app/src/main/AndroidManifest.xml").getroot()
           android = "{http://schemas.android.com/apk/res/android}"
+          assert root.find("application").get(android + "allowNativeHeapPointerTagging") == "false"
           activities = [a for a in root.findall("application/activity")
                         if a.get(android + "name") == ".settings.EngineDiagnosticsActivity"]
           assert len(activities) == 1 and activities[0].get(android + "exported") == "false"
@@ -145,7 +147,7 @@ jobs:
           field = "    buildConfigField 'String', 'DIAGNOSTICS_SOURCE', " + repr(json.dumps(os.environ["GITHUB_SHA"]))
           path.write_text(path.read_text().replace("defaultConfig {", "defaultConfig {\n" + field))
           PY
-          sed -i 's/versionCode 1/versionCode 84/' app/build.gradle
+          sed -i 's/versionCode 1/versionCode 85/' app/build.gradle
           sed -i 's/versionName "1.0.0"/versionName "0.4.9-dev"/' app/build.gradle
           sed -i 's#<string name="app_name">VirtualApp</string>#<string name="app_name">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
           sed -i 's#<string name="vxp">VirtualApp</string>#<string name="vxp">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml

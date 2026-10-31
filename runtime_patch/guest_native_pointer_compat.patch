@@ -1,0 +1,8 @@
+--- a/app/src/main/AndroidManifest.xml
++++ b/app/src/main/AndroidManifest.xml
+@@ -1,4 +1,5 @@
+     <application
+         android:name=".XApp"
+         android:allowBackup="true"
++        android:allowNativeHeapPointerTagging="false"
+         android:icon="@mipmap/ic_launcher"
