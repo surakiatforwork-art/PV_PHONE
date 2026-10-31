@@ -10,6 +10,9 @@ on:
       - 'runtime_overlay/GuestApkFiles.java'
       - 'runtime_patch/split_apk_filenames.patch'
       - 'tests/test_guest_apk_files.py'
+      - 'runtime_overlay/GuestDirectoryHooks.h'
+      - 'runtime_patch/native_directory_redirect.patch'
+      - 'tests/test_guest_directory.py'
       - 'tests/test_shortcut_query.py'
       - 'tests/test_device_profile.py'
       - 'tests/test_device_properties.py'
@@ -31,3 +34,4 @@ jobs:
       - run: python tests/test_device_properties.py -v
       - run: python tests/test_shortcut_query.py -v
       - run: python tests/test_guest_apk_files.py -v
+      - run: python tests/test_guest_directory.py -v

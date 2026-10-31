@@ -1,0 +1,19 @@
+--- a/lib/src/main/jni/Foundation/IOUniformer.cpp
++++ b/lib/src/main/jni/Foundation/IOUniformer.cpp
+@@ -124,6 +124,8 @@
+ 
+ 
+ 
++#include "GuestDirectoryHooks.h"
++
+ // int fstatat64(int dirfd, const char *pathname, struct stat *buf, int flags);
+ HOOK_DEF(int, fstatat64, int dirfd, const char *pathname, struct stat *buf, int flags) {
+     int res;
+@@ -535,6 +537,7 @@
+         HOOK_SYMBOL(handle, chdir);
+         HOOK_SYMBOL(handle, execve);
+         HOOK_SYMBOL(handle, statfs64);
++        hook_guest_directory_symbols(handle);
+         dlclose(handle);
+     }
+     // hook_dlopen(api_level);
