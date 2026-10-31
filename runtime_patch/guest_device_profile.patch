@@ -1,0 +1,61 @@
+--- a/lib/src/main/java/com/lody/virtual/client/VClientImpl.java
++++ b/lib/src/main/java/com/lody/virtual/client/VClientImpl.java
+@@ -280,6 +280,13 @@
+         }
+         mirror.android.os.Build.SERIAL.set(deviceInfo.serial);
+         mirror.android.os.Build.DEVICE.set(Build.DEVICE.replace(" ", "_"));
++        java.io.File profileRoot = VirtualCore.get().getContext().getFilesDir();
++        if (com.lody.virtual.helper.utils.GuestDeviceProfile.IQOO13.equals(
++                com.lody.virtual.helper.utils.GuestDeviceProfile.get(profileRoot, packageName, getUserId(vuid)))) {
++            com.lody.virtual.helper.utils.GuestDeviceProfile.apply(profileRoot, packageName, getUserId(vuid));
++            int propertyHooks = NativeEngine.configureGuestDeviceProfile();
++            android.util.Log.i("GuestDeviceProfile", "iQOO13 property hook coverage=" + propertyHooks);
++        }
+         ActivityThread.mInitialApplication.set(
+                 VirtualCore.mainThread(),
+                 null
+--- a/lib/src/main/java/com/lody/virtual/client/NativeEngine.java
++++ b/lib/src/main/java/com/lody/virtual/client/NativeEngine.java
+@@ -227,6 +227,8 @@
+ 
+     private static native void nativeEnableIORedirect(String selfSoPath, int apiLevel, int previewApiLevel);
+ 
++    public static native int configureGuestDeviceProfile();
++
+     public static native void disableJit(int apiLevel);
+ 
+     public static int onGetUid(int uid) {
+--- a/lib/src/main/jni/Foundation/IOUniformer.cpp
++++ b/lib/src/main/jni/Foundation/IOUniformer.cpp
+@@ -94,6 +94,10 @@
+ }
+ 
+ 
++#include "GuestDeviceProperties.h"
++
++int configureGuestDeviceProperties() { return GuestDeviceProperties::install(); }
++
+ void onSoLoaded(const char *name, void *handle);
+ 
+ void IOUniformer::redirect(const char *orig_path, const char *new_path) {
+--- a/lib/src/main/jni/Jni/VAJni.cpp
++++ b/lib/src/main/jni/Jni/VAJni.cpp
+@@ -9,6 +9,10 @@
+ #include "VAJni.h"
+ 
+ using namespace facebook::jni;
++extern int configureGuestDeviceProperties();
++static jint jni_configureGuestDeviceProfile(alias_ref<jclass>) {
++    return configureGuestDeviceProperties();
++}
+ 
+ static void jni_nativeLaunchEngine(alias_ref<jclass> clazz, JArrayClass<jobject> javaMethods,
+                                    jstring packageName,
+@@ -88,6 +92,7 @@
+                                          jni_nativeReverseRedirectedPath),
+                         makeNativeMethod("nativeLaunchEngine",
+                                          jni_nativeLaunchEngine),
++                        makeNativeMethod("configureGuestDeviceProfile", jni_configureGuestDeviceProfile),
+                         makeNativeMethod("disableJit", jni_disableJit)
+                 }
+         );

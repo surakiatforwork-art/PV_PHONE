@@ -1,0 +1,25 @@
+name: Guest device profile contracts
+on:
+  push:
+    paths:
+      - 'runtime_overlay/GuestDeviceProfile.java'
+      - 'runtime_overlay/GuestDeviceProperties.h'
+      - 'runtime_patch/guest_device_profile.patch'
+      - 'tests/test_device_profile.py'
+      - 'tests/test_device_properties.py'
+      - '.github/workflows/device-profile-contract.yml'
+  workflow_dispatch:
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python tests/test_device_profile.py -v
+      - run: python tests/test_device_properties.py -v

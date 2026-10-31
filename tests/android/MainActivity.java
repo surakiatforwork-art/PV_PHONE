@@ -17,6 +17,12 @@ public class MainActivity extends Activity {
   super.onCreate(saved);
   LinearLayout root=new LinearLayout(this); root.setOrientation(1);
   status=new TextView(this); status.setTextSize(18); root.addView(status);
+  Button profile=new Button(this);profile.setText("Test device profile");root.addView(profile);
+  profile.setOnClickListener(v->{try{
+   Class<?> props=Class.forName("android.os.SystemProperties");
+   java.lang.reflect.Method get=props.getDeclaredMethod("get",String.class);get.setAccessible(true);
+   status.setText("PROFILE package="+getPackageName()+" MODEL="+Build.MODEL+" BRAND="+Build.BRAND+" MANUFACTURER="+Build.MANUFACTURER+" PRODUCT="+Build.PRODUCT+" DEVICE="+Build.DEVICE+" propModel="+get.invoke(null,"ro.product.model")+" propMarket="+get.invoke(null,"ro.product.vendor.marketname")+" SDK="+Build.VERSION.SDK_INT+" ABI="+Build.SUPPORTED_ABIS[0]);
+  }catch(Throwable e){status.setText("PROFILE FAIL "+e);}});
   Button gps=new Button(this);gps.setText("Test device location");root.addView(gps);
   gps.setOnClickListener(v->testLocation());
   Button storage=new Button(this);storage.setText("Test shared device files");root.addView(storage);

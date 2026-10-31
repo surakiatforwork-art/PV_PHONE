@@ -144,9 +144,13 @@ public class NewHomeActivity extends AppCompatActivity {
                 : mRecyclerView;
         PopupMenu popup = new PopupMenu(this, itemView);
         popup.getMenuInflater().inflate(R.menu.app_popup_menu, popup.getMenu());
+        final int deviceProfileItem = 0x70680001;
+        popup.getMenu().add(Menu.NONE, deviceProfileItem, Menu.NONE, "Device profile");
         popup.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
-            if (id == R.id.app_clear) {
+            if (id == deviceProfileItem) {
+                showDeviceProfile(appData.packageName, 0);
+            } else if (id == R.id.app_clear) {
                 confirmClearData(appData);
             } else if (id == R.id.app_stop) {
                 confirmStopApp(appData);
@@ -158,6 +162,22 @@ public class NewHomeActivity extends AppCompatActivity {
             return true;
         });
         popup.show();
+    }
+
+    private void showDeviceProfile(String pkg, int user) {
+        java.io.File root = getFilesDir();
+        String current = com.lody.virtual.helper.utils.GuestDeviceProfile.get(root, pkg, user);
+        new AlertDialog.Builder(this).setTitle("Device profile: " + pkg)
+                .setSingleChoiceItems(new String[]{"Device default", "iQOO 13 (V2408A)"},
+                        "iqoo13".equals(current) ? 1 : 0, (dialog, which) -> {
+                            String selected = which == 1 ? "iqoo13" : "default";
+                            if (com.lody.virtual.helper.utils.GuestDeviceProfile.set(root, pkg, user, selected)) {
+                                VirtualCore.get().killApp(pkg, user);
+                                Toast.makeText(this, "Profile saved. Open the guest again.", Toast.LENGTH_LONG).show();
+                            } else Toast.makeText(this, "Could not save profile", Toast.LENGTH_LONG).show();
+                            dialog.dismiss();
+                        })
+                .setNegativeButton(android.R.string.cancel, null).show();
     }
 
     private void confirmClearData(PackageAppData appData) {
