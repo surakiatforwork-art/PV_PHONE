@@ -2,6 +2,11 @@ name: PHANToM VPhone Release Candidate
 
 on:
   workflow_dispatch:
+    inputs:
+      native_trace:
+        description: 'Temporary debuggable APK for scoped native crash diagnosis'
+        type: boolean
+        default: false
   push:
     paths:
       - '.github/workflows/phantom-vphone-rc.yml'
@@ -146,6 +151,12 @@ jobs:
           sed -i 's#<string name="vxp">VirtualApp</string>#<string name="vxp">PHANToM VPhone</string>#' app/src/main/res/values/strings.xml
           sed -i 's/VirtualApp-${variant.versionName}-${abi}.apk/PHANToM-VPhone-${variant.versionName}-${abi}.apk/' app/build.gradle
 
+      - name: Enable manual native trace build
+        if: github.event_name == 'workflow_dispatch' && inputs.native_trace
+        run: |
+          sed -i 's/debuggable false/debuggable true/' runtime/app/build.gradle
+          sed -i 's/versionName "0.4.9-dev"/versionName "0.4.9-dev-trace"/' runtime/app/build.gradle
+
       - name: Configure stable alpha signing
         env:
           PHANTOM_KEYSTORE_BASE64: ${{ secrets.PHANTOM_ALPHA_KEYSTORE_BASE64 }}
@@ -195,13 +206,13 @@ jobs:
       - name: Upload arm64 APK
         uses: actions/upload-artifact@v4
         with:
-          name: PHANToM-VPhone-v0.4.9-dev-arm64
+          name: PHANToM-VPhone-v0.4.9-dev-arm64${{ inputs.native_trace && '-native-trace' || '' }}
           path: runtime/app/build/outputs/apk/release/*-arm64-v8a.apk
           retention-days: 14
 
       - name: Upload universal APK
         uses: actions/upload-artifact@v4
         with:
-          name: PHANToM-VPhone-v0.4.9-dev-universal
+          name: PHANToM-VPhone-v0.4.9-dev-universal${{ inputs.native_trace && '-native-trace' || '' }}
           path: runtime/app/build/outputs/apk/release/*-universal.apk
           retention-days: 14
